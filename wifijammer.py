@@ -11,6 +11,9 @@ from subprocess import Popen, call, PIPE
 from signal import SIGINT, SIGTERM, signal
 from threading import Thread, Lock
 import argparse
+import socket
+import struct
+import fcntl
 
 # Console colors
 W  = '\033[0m'  # white (normal)
@@ -117,15 +120,9 @@ def remove_mon_iface():
     proc = Popen(['airmon-ng', 'stop', mon_iface], stdout=PIPE, stderr=DN)
 
 def mon_mac(mon_iface):
-    proc = Popen(['ifconfig'], stdout=PIPE, stderr=DN)
-    for line in proc.communicate()[0].split('\n'):
-        if mon_iface in line:
-            line = line.split()
-            mac = line[4][:17]
-            if '-' in mac:
-                mac = mac.replace('-', ':')
-            print '['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W
-            return mac
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
+    return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 ########################################
 # End of interface info and manipulation

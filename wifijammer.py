@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")
     parser.add_argument("-c", "--channel", help="Listen on and deauth only clients on the specified channel. Example: -c 6")
     parser.add_argument("-m", "--maximum", help="Choose the maximum number of clients to deauth. List of clients will be emptied and repopulated after hitting the limit. Example: -m 5")
+    parser.add_argument("-n", "--noupdate", help="Do not clear the deauth list when the maximum (-m) number of client/AP combos is reached. Must be used in conjunction with -m. Example: -m 10 -n", action='store_true')
     parser.add_argument("-t", "--timeinterval", help="Choose the time interval between packets being sent. Default is as fast as possible. If you see scapy errors like 'no buffer space' try: -t .00001")
     parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
     return parser.parse_args()
@@ -207,9 +208,13 @@ def cb(pkt):
     # return these if's keeping clients_APs the same or just reset clients_APs?
     # I like the idea of the tool repopulating the variable more
     if args.maximum:
-        if len(clients_APs) > int(args.maximum):
-            clients_APs = []
-            APs = []
+        if args.noupdate:
+            if len(clients_APs) > int(args.maximum):
+                return
+        else:
+            if len(clients_APs) > int(args.maximum):
+                clients_APs = []
+                APs = []
 
     # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
     ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:']

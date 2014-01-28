@@ -1,6 +1,9 @@
 wifijammer
 ==========
 
+
+**NOT WORKING YET - will fix shortly**
+
 Continuously jam all wifi clients within range.
 
 

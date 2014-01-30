@@ -18,7 +18,7 @@ python wifijammer.py
 
 This will find the most powerful wireless interface and turn on monitor mode. If a monitor mode interface is already up it will use the first one it finds instead. It will then start sequentially hopping channels 1 per second from channel 1 to 11 identifying all access points and clients connected to those access points. On the first pass through all the wireless channels it is only identifying targets. After that the 1sec per channel time limit is eliminated and channels are hopped as soon as the deauth packets finish sending. Note that it will still add clients and APs as it finds them after the first pass through.
 
-Upon hopping to a new channel it will identify targets that are on that channel and send 1 deauth packet to the client from the AP, 1 deauth from the AP to the client, and 1 deauth to the AP destined for the broadcast address to deauth all clients connected to the AP. Many APs ignore deauths to broadcast addresses.
+Upon hopping to a new channel it will identify targets that are on that channel and send 1 deauth packet to the client from the AP, 1 deauth to the AP from the client, and 1 deauth to the AP destined for the broadcast address to deauth all clients connected to the AP. Many APs ignore deauths to broadcast addresses.
 
 
 ### Advanced
@@ -28,7 +28,7 @@ python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d
 
 -c, Set the monitor mode interface to only listen and deauth clients or APs on channel 1
 
--p, Send 5 packets to the client from the AP and 5 packets from the AP to the client along with 5 packets to the broadcast address of the AP
+-p, Send 5 packets to the client from the AP and 5 packets to the AP from the client along with 5 packets to the broadcast address of the AP
 
 -t, Set a time interval of .00001 seconds between sending each deauth (try this if you get a scapy error like 'no buffer space')
 

@@ -1,23 +1,10 @@
 wifijammer
 ==========
 
-
-**NOT WORKING YET - will fix shortly**
-
-Continuously jam all wifi clients within range.
+Continuously jam all wifi clients and access points within range. The effectiveness of this script is constrained by your wireless card. Alfa cards seem to effectively jam within about a block's range with heavy access point saturation. Granularity is given in the options for more effective targeting. 
 
 
-The effectiveness of this script is constrained by your wireless card. Granularity is given in the options so you can more effectively jam. The more clients in the deauth list the less packets/second are going to reach each client/AP. I have found on my Alfa card that more than about 6 in the list and you won't get good consistency in killing their connection. The most consistent connection loss seems to be when you just focus on one channel with the -c <num> option.
-
-
-Requires: airmon-ng, python 2.7, scapy, a wireless card capable of injection
-
-
-All options:
-
-```shell
-python wifijammer.py [-c CHANNEL] [-i INTERFACE] [-m MAXIMUM] [-p PACKETS] [-s SKIP] [-t TIME INTERVAL]
-```
+Requires: airmon-ng, python 2.7, python-scapy, a wireless card capable of injection
 
 
 Usage
@@ -29,33 +16,67 @@ Usage
 python wifijammer.py
 ```
 
-This will find the monitor mode interface if one is up and if one isn't up it will find the most powerful wireless interface and turn on monitor mode. It will then start hopping channels and identifying all wireless communication between clients and access points. Once it's identified a client/AP combo, it will constantly send deauthentication packets to them.
+This will find the most powerful wireless interface and turn on monitor mode. If a monitor mode interface is already up it will use the first one it finds instead. It will then start sequentially hopping channels 1 per second from channel 1 to 11 identifying all access points and clients connected to those access points. On the first pass through all the wireless channels it is only identifying targets. After that the 1sec per channel time limit is eliminated and channels are hopped as soon as the deauth packets finish sending. Note that it will still add clients and APs as it finds them after the first pass through.
 
-
-By default this simple usage has no set interval time between packets being sent and will go down its list of clients/APs sending 1 packet to the client from the AP, and 1 packet from the AP to the client before moving on to the next client/AP connection. You can adjust both these options with the -t and -p options respectively.
+Upon hopping to a new channel it will identify targets that are on that channel and send 1 deauth packet to the client from the AP, 1 deauth from the AP to the client, and 1 deauth to the AP destined for the broadcast address to deauth all clients connected to the AP. Many APs ignore deauths to broadcast addresses.
 
 
 ### Advanced
 ```shell
-python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52
+python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d
 ```
 
-Set the monitor mode interface to only listen on channel 1, send 5 packets to the client from the AP and 5 packets from the AP to the client, set a time interval of .00001 seconds between sending each deauth (try this if you get a scapy error like 'no buffer space'), and do not deauth the MAC DL:3D:8D:JJ:39:52.
+-c, Set the monitor mode interface to only listen and deauth clients or APs on channel 1
+
+-p, Send 5 packets to the client from the AP and 5 packets from the AP to the client along with 5 packets to the broadcast address of the AP
+
+-t, Set a time interval of .00001 seconds between sending each deauth (try this if you get a scapy error like 'no buffer space')
+
+-s, Do not deauth the MAC DL:3D:8D:JJ:39:52
+
+-d, Do not send deauths to access points' broadcast address; this will speed up the deauths to the clients that are found
+
+
+Ignoring a certain MAC address is handy in case you want to tempt people to join your access point in cases of wanting to use LANs.py or a Pineapple on them.
 
 
 ### Walking/driving around
 ```shell
 python wifijammer.py -m 10
 ```
-The -m option sets a max number of client/AP combos that the script will attempt to deauth. When the max number is reached, it clears and repopulates its list based on what traffic it sniffs in the area. This allows you to constantly update the deauth list with client/AP combos who have the strongest signal in case you were not stationary. 
+The -m option sets a max number of client/AP combos that the script will attempt to deauth. When the max number is reached, it clears and repopulates its list based on what traffic it sniffs in the area. This allows you to constantly update the deauth list with client/AP combos who have the strongest signal in case you were not stationary. If you want to set a max and not have the deauth list clear itself when the max is hit, just add the -n option like: -m 10 -n
 
 
-### My favorite
+All options:
+
 ```shell
-python wifijammer.py -c 1 -s 11:22:33:44:55:EE:77
+python wifijammer.py [-c CHANNEL] [-d] [-i INTERFACE] [-m MAXIMUM] [-n] [-p PACKETS] [-s SKIP] [-t TIME INTERVAL]
 ```
 
-This is handy in case you want to tempt people to join your access point (using LANs.py or a Pineapple would be good examples). It will only listen for client/AP combos on channel 1 and it will not deauth any connections to or from 11:22:33:44:55:EE:77 which we will pretend is our own access point's MAC address. I find the best consistency in killing connections when you focus the script on one channel. Initial evidence seems to suggest that keeping the consecutive number of packets send as the default 1 to
-client, 1 to AP is the best as well. 
 
+License
+-------
 
+Copyright (c) 2014, Dan McInerney
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+* Neither the name of Dan McInerney nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-------
+danmcinerney.org
+[![Analytics](https://ga-beacon.appspot.com/UA-46613304-3/wifijammer/README.md)](https://github.com/igrigorik/ga-beacon)

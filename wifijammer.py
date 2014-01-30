@@ -124,7 +124,6 @@ def remove_mon_iface():
 def mon_mac(mon_iface):
     '''
     http://stackoverflow.com/questions/159137/getting-mac-address
-    I don't know what the hell is going on here other than we're opening a socket
     '''
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))

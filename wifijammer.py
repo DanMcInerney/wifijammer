@@ -117,6 +117,7 @@ def start_mon_mode(interface):
             line = line.split()
             monmode = line[4][:-1] # -1 because it ends in ')'
             return monmode
+    sys.exit("Could not start airmon-ng.")
 
 def remove_mon_iface():
     proc = Popen(['airmon-ng', 'stop', mon_iface], stdout=PIPE, stderr=DN)
@@ -337,7 +338,8 @@ def stop(signal, frame):
 
 
 if __name__ == "__main__":
-
+    if os.geteuid():
+        sys.exit("Please run as root.")
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')

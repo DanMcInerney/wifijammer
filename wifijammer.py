@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
-import logging
-from scapy.all import *
+from scapy.layers.dot11 import Dot11, Dot11Deauth, Dot11Beacon
+from scapy.layers.dot11 import Dot11Elt, Dot11ProbeResp
+from scapy.all import conf
+from scapy.all import send
+from scapy.all import sniff
+import scapy.themes.Color as ScapyColor
 import os
 import sys
 from subprocess import Popen, PIPE
@@ -13,24 +17,49 @@ import struct
 import fcntl
 import time
 import re
-
+import logging
 
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)  # Shut up Scapy
 conf.verb = 0  # Scapy I thought I told you to shut up
 
 
-class Colors(object):
+class Colors(ScapyColor):
 
-    """Simple Class structure to hold the colors"""
-    White = '\033[0m'
-    Red = '\033[31m'
-    Green = '\033[32m'
-    Orange = '\033[33m'
-    # Blue = '\033[34m'
-    # Purple = '\033[35m'
-    # Cyan = '\033[36m'
-    Gray = '\033[37m'
-    Tan = '\033[93m'
+    """Simple Class structure that extends the scapy colors with some common
+    functions"""
+
+    tan = '\033[93m'
+
+    def __init__(self, *args, **kwargs):
+        super(Colors, self).__init__(*args, **kwargs)
+
+    def format_string(self, content="", color=ScapyColor.normal):
+        """Returns a string with with the formatted color"""
+        return str(color) + content + self.normal
+
+    def format_green(self, content=""):
+        """Return a green formatted string"""
+        return self.format_string(content, self.green)
+
+    def format_orange(self, content=""):
+        """Return an orange formatted string"""
+        return self.format_string(content, self.green)
+
+    def format_tan(self, content=""):
+        """Return an orange formatted string"""
+        return self.format_string(content, self.tan)
+
+    def star(self, color=ScapyColor.green):
+        """Returns star header [*] with the '*' the passed in color."""
+        return '[' + self.format_string("*", color) + ']'
+
+    def plus(self, color=ScapyColor.green):
+        """Returns star header [+] with the '*' the passed in color."""
+        return '[' + self.format_string("+", color) + ']'
+
+    def dash(self, color=ScapyColor.green):
+        """Returns star header [-] with the '*' the passed in color."""
+        return '[' + self.format_string("-", color) + ']'
 
 
 def parse_args():
@@ -100,8 +129,8 @@ def get_mon_iface(args):
         return monitors[0]
     else:
         # Start monitor mode on a wireless interface
-        print('[' + Colors.Green + '*' + Colors.White +
-              '] Finding the most powerful interface...')
+        print(Colors.star(Colors.green) +
+              ' Finding the most powerful interface...')
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
         return monmode
@@ -132,7 +161,7 @@ def get_iface(interfaces):
     scanned_aps = []
 
     if len(interfaces) < 1:
-        sys.exit('[' + Colors.Red + '-' + Colors.White + '] '
+        sys.exit(Colors.dash(Colors.red) + ' '
                  'No wireless interfaces found, bring one up and try again')
     if len(interfaces) == 1:
         for interface in interfaces:
@@ -146,27 +175,26 @@ def get_iface(interfaces):
             if ' - Address:' in line:  # first line in iwlist scan for a new AP
                 count += 1
         scanned_aps.append((count, iface))
-        print('[' + Colors.Green + '+' + Colors.White + '] Networks discovered by ' +
-              Colors.Green + iface + Colors.White + ': ' + Colors.Tan + str(count) + Colors.White)
+        print(Colors.plus(Colors.red) + ' Networks discovered by ' +
+              Colors.format_green(iface) + ': ' + Colors.format_tan(count))
     try:
         interface = max(scanned_aps)[1]
         if interfaces[interface] == 1:
-            raw_input('[' + Colors.Red + '-' + Colors.White + '] Disconnect ' + Colors.Green + interface + Colors.White +
+            raw_input(Colors.dash(Colors.red) + ' Disconnect ' + Colors.format_green(interface) +
                       ' from its network or channel hopping will fail. When done hit [ENTER]')
         return interface
     except Exception as e:
         for iface in interfaces:
             interface = iface
-            print('[' + Colors.Red + '-' +
-                  Colors.Colors.White + '] Minor error:', e)
+            print(Colors.dash(Colors.red) + ' Minor error:', e)
             print('    Starting monitor mode on ' +
-                  Colors.Green + interface + Colors.White)
+                  Colors.format_green(interface))
             return interface
 
 
 def start_mon_mode(interface):
-    print('[' + Colors.Green + '+' + Colors.White + '] Starting monitor mode on ' +
-          Colors.Green + interface + Colors.White)
+    print(Colors.plus(Colors.green) + ' Starting monitor mode on ' +
+          Colors.format_green(interface))
     proc = Popen(['airmon-ng', 'start', interface], stdout=PIPE, stderr=DN)
     for line in proc.communicate()[0].split('\n'):
         if 'monitor mode enabled on' in line:
@@ -186,8 +214,9 @@ def mon_mac(mon_iface):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
     mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
-    print('[' + Colors.Green + '*' + Colors.White + '] Monitor mode: ' + Colors.Green +
-          mon_iface + Colors.White + ' - ' + Colors.Orange + mac + Colors.White)
+    print(Colors.star(Colors.green) + ' Monitor mode: ' +
+          Colors.format_green(mon_iface) + ' - ' +
+          Colors.format_orange(mac))
     return mac
 
 ########################################
@@ -220,9 +249,9 @@ def channel_hop(mon_iface, args):
         for line in proc.communicate()[1].split('\n'):
             # iw dev shouldnt display output unless there's an error
             if len(line) > 2:
-                err = ('[' + Colors.Red + '-' + Colors.White +
-                       '] Channel hopping failed: ' + Colors.Red + line +
-                       Colors.White + '\n' +
+                err = ('[' + Colors.red + '-' + Colors.white +
+                       '] Channel hopping failed: ' + Colors.red + line +
+                       Colors.white + '\n' +
                        '    Try disconnecting the monitor mode\'s parent '
                        'interface (e.g. wlan0)\n'
                        '    from the network if you have not already\n')
@@ -291,26 +320,26 @@ def output(err, monchannel):
     if err:
         print(err)
     else:
-        print('[' + Colors.Green + '+' + Colors.White + '] ' + mon_iface +
-              ' channel: ' + Colors.Green + monchannel + Colors.White + '\n')
+        print(Colors.plus(Colors.green) + ' ' + mon_iface +
+              ' channel: ' + Colors.green + monchannel + Colors.white + '\n')
     if len(clients_APs) > 0:
         print('                  Deauthing                 ch   ESSID')
     # Print the deauth list
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print('[' + Colors.Tan + '*' + Colors.White + '] ' + Colors.Orange + ca[0] + Colors.White + ' - ' +
-                      Colors.Orange + ca[1] + Colors.White + ' - ' + ca[2].ljust(2) + ' - ' + Colors.Tan + ca[3] + Colors.White)
+                print(Colors.star(Colors.Tan) + ' ' + Colors.Orange + ca[0] + Colors.white + ' - ' +
+                      Colors.Orange + ca[1] + Colors.white + ' - ' + ca[2].ljust(2) + ' - ' + Colors.Tan + ca[3] + Colors.white)
             else:
-                print('[' + Colors.Tan + '*' + Colors.White + '] ' + Colors.Orange + ca[0]
-                      + Colors.White + ' - ' + Colors.Orange + ca[1] + Colors.White + ' - ' + ca[2])
+                print(Colors.star(Colors.Tan) + ' ' + Colors.Orange + ca[0]
+                      + Colors.white + ' - ' + Colors.Orange + ca[1] + Colors.white + ' - ' + ca[2])
     if len(APs) > 0:
         print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print('[' + Colors.Tan + '*' + Colors.White + '] ' + Colors.Orange + ap[0] +
-                  Colors.White + ' - ' + ap[1].ljust(2) + ' - ' + Colors.Tan + ap[2] + Colors.White)
-    print('')
+            print(Colors.star(Colors.Tan) + ' ' + Colors.Orange + ap[0] +
+                  Colors.white + ' - ' + ap[1].ljust(2) + ' - ' + Colors.Tan + ap[2] + Colors.white)
+    print()
 
 
 def cb(pkt):
@@ -411,10 +440,10 @@ def AP_check(addr1, addr2):
 
 def stop(signal, frame):
     if monitor_on:
-        sys.exit('\n[' + Colors.Red + '!' + Colors.White + '] Closing')
+        sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
     else:
         remove_mon_iface()
-        sys.exit('\n[' + Colors.Red + '!' + Colors.White + '] Closing')
+        sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
 
 
 if __name__ == "__main__":
@@ -440,5 +469,5 @@ if __name__ == "__main__":
     try:
         sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
-        print('\n[' + Colors.Red + '!' + Colors.White + '] Closing:', msg)
+        print('\n[' + Colors.red + '!' + Colors.white + '] Closing:', msg)
         sys.exit(0)

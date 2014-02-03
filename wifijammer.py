@@ -5,10 +5,9 @@ logging.getLogger("scapy.runtime").setLevel(logging.ERROR)  # Shut up Scapy
 from scapy.all import *
 conf.verb = 0  # Scapy I thought I told you to shut up
 import os
-from threading import Thread
 import sys
-from subprocess import Popen, call, PIPE
-from signal import SIGINT, SIGTERM, signal
+from subprocess import Popen, PIPE
+from signal import SIGINT, signal
 from threading import Thread, Lock
 import argparse
 import socket

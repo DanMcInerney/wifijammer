@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 import logging
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)  # Shut up Scapy
 from scapy.all import *
-conf.verb = 0  # Scapy I thought I told you to shut up
 import os
 import sys
 from subprocess import Popen, PIPE
@@ -13,17 +11,26 @@ import argparse
 import socket
 import struct
 import fcntl
+import time
+import re
 
-# Console colors
-W = '\033[0m'  # white (normal)
-R = '\033[31m'  # red
-G = '\033[32m'  # green
-O = '\033[33m'  # orange
-B = '\033[34m'  # blue
-P = '\033[35m'  # purple
-C = '\033[36m'  # cyan
-GR = '\033[37m'  # gray
-T = '\033[93m'  # tan
+
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)  # Shut up Scapy
+conf.verb = 0  # Scapy I thought I told you to shut up
+
+
+class Colors(object):
+
+    """Simple Class structure to hold the colors"""
+    White = '\033[0m'
+    Red = '\033[31m'
+    Green = '\033[32m'
+    Orange = '\033[33m'
+    # Blue = '\033[34m'
+    # Purple = '\033[35m'
+    # Cyan = '\033[36m'
+    Gray = '\033[37m'
+    Tan = '\033[93m'
 
 
 def parse_args():
@@ -93,7 +100,8 @@ def get_mon_iface(args):
         return monitors[0]
     else:
         # Start monitor mode on a wireless interface
-        print '[' + G + '*' + W + '] Finding the most powerful interface...'
+        print('[' + Colors.Green + '*' + Colors.White +
+              '] Finding the most powerful interface...')
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
         return monmode
@@ -124,7 +132,7 @@ def get_iface(interfaces):
     scanned_aps = []
 
     if len(interfaces) < 1:
-        sys.exit('[' + R + '-' + W + '] '
+        sys.exit('[' + Colors.Red + '-' + Colors.White + '] '
                  'No wireless interfaces found, bring one up and try again')
     if len(interfaces) == 1:
         for interface in interfaces:
@@ -138,23 +146,27 @@ def get_iface(interfaces):
             if ' - Address:' in line:  # first line in iwlist scan for a new AP
                 count += 1
         scanned_aps.append((count, iface))
-        print '[' + G + '+' + W + '] Networks discovered by ' + G + iface + W + ': ' + T + str(count) + W
+        print('[' + Colors.Green + '+' + Colors.White + '] Networks discovered by ' +
+              Colors.Green + iface + Colors.White + ': ' + Colors.Tan + str(count) + Colors.White)
     try:
         interface = max(scanned_aps)[1]
         if interfaces[interface] == 1:
-            raw_input('[' + R + '-' + W + '] Disconnect ' + G + interface + W +
+            raw_input('[' + Colors.Red + '-' + Colors.White + '] Disconnect ' + Colors.Green + interface + Colors.White +
                       ' from its network or channel hopping will fail. When done hit [ENTER]')
         return interface
     except Exception as e:
         for iface in interfaces:
             interface = iface
-            print '[' + R + '-' + W + '] Minor error:', e
-            print '    Starting monitor mode on ' + G + interface + W
+            print('[' + Colors.Red + '-' +
+                  Colors.Colors.White + '] Minor error:', e)
+            print('    Starting monitor mode on ' +
+                  Colors.Green + interface + Colors.White)
             return interface
 
 
 def start_mon_mode(interface):
-    print '[' + G + '+' + W + '] Starting monitor mode on ' + G + interface + W
+    print('[' + Colors.Green + '+' + Colors.White + '] Starting monitor mode on ' +
+          Colors.Green + interface + Colors.White)
     proc = Popen(['airmon-ng', 'start', interface], stdout=PIPE, stderr=DN)
     for line in proc.communicate()[0].split('\n'):
         if 'monitor mode enabled on' in line:
@@ -174,7 +186,8 @@ def mon_mac(mon_iface):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
     mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
-    print '[' + G + '*' + W + '] Monitor mode: ' + G + mon_iface + W + ' - ' + O + mac + W
+    print('[' + Colors.Green + '*' + Colors.White + '] Monitor mode: ' + Colors.Green +
+          mon_iface + Colors.White + ' - ' + Colors.Orange + mac + Colors.White)
     return mac
 
 ########################################
@@ -207,9 +220,12 @@ def channel_hop(mon_iface, args):
         for line in proc.communicate()[1].split('\n'):
             # iw dev shouldnt display output unless there's an error
             if len(line) > 2:
-                err = '[' + R + '-' + W + '] Channel hopping failed: ' + R + line + W + '\n    \
-Try disconnecting the monitor mode\'s parent interface (e.g. wlan0)\n    \
-from the network if you have not already\n'
+                err = ('[' + Colors.Red + '-' + Colors.White +
+                       '] Channel hopping failed: ' + Colors.Red + line +
+                       Colors.White + '\n' +
+                       '    Try disconnecting the monitor mode\'s parent '
+                       'interface (e.g. wlan0)\n'
+                       '    from the network if you have not already\n')
 
         output(err, monchannel)
         deauth(monchannel)
@@ -273,24 +289,28 @@ def deauth(monchannel):
 def output(err, monchannel):
     os.system('clear')
     if err:
-        print err
+        print(err)
     else:
-        print '[' + G + '+' + W + '] ' + mon_iface + ' channel: ' + G + monchannel + W + '\n'
+        print('[' + Colors.Green + '+' + Colors.White + '] ' + mon_iface +
+              ' channel: ' + Colors.Green + monchannel + Colors.White + '\n')
     if len(clients_APs) > 0:
-        print '                  Deauthing                 ch   ESSID'
+        print('                  Deauthing                 ch   ESSID')
     # Print the deauth list
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print '[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2].ljust(2) + ' - ' + T + ca[3] + W
+                print('[' + Colors.Tan + '*' + Colors.White + '] ' + Colors.Orange + ca[0] + Colors.White + ' - ' +
+                      Colors.Orange + ca[1] + Colors.White + ' - ' + ca[2].ljust(2) + ' - ' + Colors.Tan + ca[3] + Colors.White)
             else:
-                print '[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2]
+                print('[' + Colors.Tan + '*' + Colors.White + '] ' + Colors.Orange + ca[0]
+                      + Colors.White + ' - ' + Colors.Orange + ca[1] + Colors.White + ' - ' + ca[2])
     if len(APs) > 0:
-        print '\n      Access Points     ch   ESSID'
+        print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print '[' + T + '*' + W + '] ' + O + ap[0] + W + ' - ' + ap[1].ljust(2) + ' - ' + T + ap[2] + W
-    print ''
+            print('[' + Colors.Tan + '*' + Colors.White + '] ' + Colors.Orange + ap[0] +
+                  Colors.White + ' - ' + ap[1].ljust(2) + ' - ' + Colors.Tan + ap[2] + Colors.White)
+    print('')
 
 
 def cb(pkt):
@@ -391,10 +411,10 @@ def AP_check(addr1, addr2):
 
 def stop(signal, frame):
     if monitor_on:
-        sys.exit('\n[' + R + '!' + W + '] Closing')
+        sys.exit('\n[' + Colors.Red + '!' + Colors.White + '] Closing')
     else:
         remove_mon_iface()
-        sys.exit('\n[' + R + '!' + W + '] Closing')
+        sys.exit('\n[' + Colors.Red + '!' + Colors.White + '] Closing')
 
 
 if __name__ == "__main__":
@@ -420,5 +440,5 @@ if __name__ == "__main__":
     try:
         sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
-        print '\n[' + R + '!' + W + '] Closing:', msg
+        print('\n[' + Colors.Red + '!' + Colors.White + '] Closing:', msg)
         sys.exit(0)

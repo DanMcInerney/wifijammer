@@ -27,7 +27,7 @@ GR = '\033[37m' # gray
 T  = '\033[93m' # tan
 
 def parse_args():
-	#Create the arguments
+    #Create the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--skip", help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
     parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")

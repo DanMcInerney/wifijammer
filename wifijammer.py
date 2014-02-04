@@ -335,7 +335,7 @@ def stop(signal, frame):
 
 if __name__ == "__main__":
     if os.geteuid():
-        sys.exit("Please run as root.")
+        sys.exit('['+R+'-'+W+'] Please run as root')
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')
@@ -358,5 +358,5 @@ if __name__ == "__main__":
        sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
-        print '\n['+R+'!'+W+'] Closing:', msg
+        print '\n['+R+'!'+W+'] Closing'
         sys.exit(0)

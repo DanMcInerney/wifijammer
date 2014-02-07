@@ -5,7 +5,7 @@ from scapy.layers.dot11 import Dot11Elt, Dot11ProbeResp
 from scapy.all import conf
 from scapy.all import send
 from scapy.all import sniff
-import scapy.themes.Color as ScapyColor
+from scapy.themes import Color as ScapyColor
 import os
 import sys
 from subprocess import Popen, PIPE
@@ -24,46 +24,53 @@ conf.verb = 0  # Scapy I thought I told you to shut up
 
 
 class Colors(ScapyColor):
-
     """Simple Class structure that extends the scapy colors with some common
     functions"""
 
+    # Adding Tan to the mix
     tan = '\033[93m'
+    white = ScapyColor.normal
 
-    def __init__(self, *args, **kwargs):
-        super(Colors, self).__init__(*args, **kwargs)
-
-    def format_string(self, content="", color=ScapyColor.normal):
+    # Simple format functions that return a string in a certain color
+    @staticmethod
+    def format_string(content="", color=ScapyColor.normal):
         """Returns a string with with the formatted color"""
-        return str(color) + content + self.normal
+        return str(color) + content + Colors.white
 
-    def format_green(self, content=""):
+    @staticmethod
+    def format_green(content=""):
         """Return a green formatted string"""
-        return self.format_string(content, self.green)
+        return Colors.format_string(content, Colors.green)
 
-    def format_orange(self, content=""):
+    @staticmethod
+    def format_orange(content=""):
         """Return an orange formatted string"""
-        return self.format_string(content, self.green)
+        return Colors.format_string(content, Colors.green)
 
-    def format_tan(self, content=""):
+    @staticmethod
+    def format_tan(content=""):
         """Return an orange formatted string"""
-        return self.format_string(content, self.tan)
+        return Colors.format_string(content, Colors.tan)
 
-    def star(self, color=ScapyColor.green):
+    # Common headers
+    @staticmethod
+    def star(color=ScapyColor.green):
         """Returns star header [*] with the '*' the passed in color."""
-        return '[' + self.format_string("*", color) + ']'
+        return '[' + Colors.format_string("*", color) + ']'
 
-    def plus(self, color=ScapyColor.green):
+    @staticmethod
+    def plus(color=ScapyColor.green):
         """Returns star header [+] with the '*' the passed in color."""
-        return '[' + self.format_string("+", color) + ']'
+        return '[' + Colors.format_string("+", color) + ']'
 
-    def dash(self, color=ScapyColor.green):
+    @staticmethod
+    def dash(color=ScapyColor.green):
         """Returns star header [-] with the '*' the passed in color."""
-        return '[' + self.format_string("-", color) + ']'
+        return '[' + Colors.format_string("-", color) + ']'
 
 
 def parse_args():
-    # Create the arguments
+    """Parse the arguments of the call."""
     parser = argparse.ArgumentParser()
     parser.add_argument("-s",
                         "--skip",
@@ -334,19 +341,19 @@ def output(err, monchannel):
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print(Colors.star(Colors.Tan) + ' ' +
+                print(Colors.star(Colors.tan) + ' ' +
                       Colors.format_orange(ca[0]) + ' - ' +
                       Colors.format_orange(ca[1]) + ' - ' + ca[2].ljust(2) +
                       ' - ' + Colors.format_tan(ca[3]))
             else:
-                print(Colors.star(Colors.Tan) + ' ' +
+                print(Colors.star(Colors.tan) + ' ' +
                       Colors.format_orange(ca[0]) + ' - ' +
                       Colors.format_orange(ca[1]) + ' - ' + ca[2])
     if len(APs) > 0:
         print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print(Colors.star(Colors.Tan) + ' ' + Colors.format_orange(ap[0]) +
+            print(Colors.star(Colors.tan) + ' ' + Colors.format_orange(ap[0]) +
                   ' - ' + ap[1].ljust(2) + ' - ' + Colors.format_tan(ap[2]))
     print()
 

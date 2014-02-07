@@ -204,17 +204,19 @@ def get_iface(interfaces):
 def start_mon_mode(interface):
     print(Colors.plus(Colors.green) + ' Starting monitor mode on ' +
           Colors.format_green(interface))
-    proc = Popen(['airmon-ng', 'start', interface], stdout=PIPE, stderr=DN)
-    for line in proc.communicate()[0].split('\n'):
-        if 'monitor mode enabled on' in line:
-            line = line.split()
-            monmode = line[4][:-1]  # -1 because it ends in ')'
-            return monmode
+    try:
+        os.system('ifconfig %s down' % interface)
+        os.system('iwconfig %s mode monitor' % interface)
+        os.system('ifconfig %s up' % interface)
+        return interface
+    except Exception:
+        sys.exit('['+R+'-'+W+'] Could not start monitor mode')
 
 
-def remove_mon_iface():
-    Popen(['airmon-ng', 'stop', mon_iface], stdout=PIPE, stderr=DN)
-
+def remove_mon_iface(mon_iface):
+    os.system('ifconfig %s down' % mon_iface)
+    os.system('iwconfig %s mode managed' % mon_iface)
+    os.system('ifconfig %s up' % mon_iface)
 
 def mon_mac(mon_iface):
     '''
@@ -325,8 +327,7 @@ def deauth(monchannel):
 
         for p in pkts:
             send(p, inter=float(args.timeinterval), count=int(args.packets))
-            # pass
-
+            #pass
 
 def output(err, monchannel):
     os.system('clear')
@@ -427,7 +428,6 @@ def APs_add(clients_APs, APs, pkt):
 
 
 def clients_APs_add(clients_APs, addr1, addr2):
-    global monchannel
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:
@@ -459,12 +459,13 @@ def stop(signal, frame):
     if monitor_on:
         sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
     else:
-        remove_mon_iface()
-        sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
+        remove_mon_iface(mon_iface)
+sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
 
 
 if __name__ == "__main__":
-
+    if os.geteuid():
+        sys.exit('['+R+'-'+W+'] Please run as root')
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')

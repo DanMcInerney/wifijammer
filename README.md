@@ -4,10 +4,7 @@ wifijammer
 Continuously jam all wifi clients and access points within range. The effectiveness of this script is constrained by your wireless card. Alfa cards seem to effectively jam within about a block's range with heavy access point saturation. Granularity is given in the options for more effective targeting. 
 
 
-Requires: airmon-ng, python 2.7, python-scapy, a wireless card capable of injection
-``` shell
-sudo apt-get install aircrack-ng python-scapy
-```
+Requires: python 2.7, python-scapy, a wireless card capable of injection
 
 
 Usage
@@ -35,12 +32,9 @@ python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d
 
 -t, Set a time interval of .00001 seconds between sending each deauth (try this if you get a scapy error like 'no buffer space')
 
--s, Do not deauth the MAC DL:3D:8D:JJ:39:52
+-s, Do not deauth the MAC DL:3D:8D:JJ:39:52. Ignoring a certain MAC address is handy in case you want to tempt people to join your access point in cases of wanting to use LANs.py or a Pineapple on them.
 
 -d, Do not send deauths to access points' broadcast address; this will speed up the deauths to the clients that are found
-
-
-Ignoring a certain MAC address is handy in case you want to tempt people to join your access point in cases of wanting to use LANs.py or a Pineapple on them.
 
 
 ### Walking/driving around

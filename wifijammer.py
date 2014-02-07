@@ -68,6 +68,11 @@ class Colors(ScapyColor):
         """Returns star header [-] with the '*' the passed in color."""
         return '[' + Colors.format_string("-", color) + ']'
 
+    @staticmethod
+    def exp(color=ScapyColor.red):
+        """Returns star header [-] with the '*' the passed in color."""
+        return '[' + Colors.format_string("!", color) + ']'
+
 
 def parse_args():
     """Parse the arguments of the call."""
@@ -210,13 +215,15 @@ def start_mon_mode(interface):
         os.system('ifconfig %s up' % interface)
         return interface
     except Exception:
-        sys.exit('['+R+'-'+W+'] Could not start monitor mode')
+        sys.exit(Colors.dash(Colors.red) +
+                 ' Could not start monitor mode')
 
 
 def remove_mon_iface(mon_iface):
     os.system('ifconfig %s down' % mon_iface)
     os.system('iwconfig %s mode managed' % mon_iface)
     os.system('ifconfig %s up' % mon_iface)
+
 
 def mon_mac(mon_iface):
     '''
@@ -327,7 +334,8 @@ def deauth(monchannel):
 
         for p in pkts:
             send(p, inter=float(args.timeinterval), count=int(args.packets))
-            #pass
+            # pass
+
 
 def output(err, monchannel):
     os.system('clear')
@@ -456,16 +464,16 @@ def AP_check(addr1, addr2):
 
 
 def stop(signal, frame):
-    if monitor_on:
-        sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
-    else:
+
+    if not monitor_on:
         remove_mon_iface(mon_iface)
-sys.exit('\n[' + Colors.red + '!' + Colors.white + '] Closing')
+
+    sys.exit('\n' + Colors.exp() + ' Closing')
 
 
 if __name__ == "__main__":
     if os.geteuid():
-        sys.exit('['+R+'-'+W+'] Please run as root')
+        sys.exit(Colors.dash(Colors.red) + ' Please run as root')
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')
@@ -487,5 +495,5 @@ if __name__ == "__main__":
     try:
         sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
-        print('\n[' + Colors.red + '!' + Colors.white + '] Closing:', msg)
+        print('\n' + Colors.exp() + ' Closing:', msg)
         sys.exit(0)

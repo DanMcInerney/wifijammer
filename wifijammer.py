@@ -213,9 +213,7 @@ def deauth(monchannel):
             args.packets = 1
 
         for p in pkts:
-            #send(p, inter=float(args.timeinterval), count=int(args.packets))
-            pass
-        time.sleep(.5)
+            send(p, inter=float(args.timeinterval), count=int(args.packets))
 
 def output(err, monchannel):
     os.system('clear')

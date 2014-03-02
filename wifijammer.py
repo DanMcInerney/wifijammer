@@ -170,7 +170,7 @@ def channel_hop(mon_iface, args):
 
         output(err, monchannel)
         if args.channel:
-            time.sleep(.1)
+            time.sleep(.05)
         else:
             # For the first channel hop thru, do not deauth
             if first_pass == 1:
@@ -287,7 +287,7 @@ def cb(pkt):
 
             # Check if it's added to our AP list
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
-                APs_add(clients_APs, APs, pkt)
+                APs_add(clients_APs, APs, pkt, args.channel)
 
             # Ignore all the noisy packets like spanning tree
             if noise_filter(args.skip, pkt.addr1, pkt.addr2):
@@ -297,7 +297,7 @@ def cb(pkt):
             if pkt.type in [1, 2]:
                 clients_APs_add(clients_APs, pkt.addr1, pkt.addr2)
 
-def APs_add(clients_APs, APs, pkt):
+def APs_add(clients_APs, APs, pkt, chan_arg):
     ssid       = pkt[Dot11Elt].info
     bssid      = pkt[Dot11].addr3
     try:
@@ -307,6 +307,11 @@ def APs_add(clients_APs, APs, pkt):
         chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
             return
+
+        if chan_arg:
+            if ap_channel != chan_arg:
+                return
+
     except Exception as e:
         return
 

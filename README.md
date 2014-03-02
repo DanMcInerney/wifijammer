@@ -20,6 +20,12 @@ This will find the most powerful wireless interface and turn on monitor mode. If
 
 Upon hopping to a new channel it will identify targets that are on that channel and send 1 deauth packet to the client from the AP, 1 deauth to the AP from the client, and 1 deauth to the AP destined for the broadcast address to deauth all clients connected to the AP. Many APs ignore deauths to broadcast addresses.
 
+```shell
+python wifijammer.py -a 00:0E:DA:DE:24:8E
+```
+
+Deauthenticate all devices with which 00:0E:DA:DE:24:8E communicates. This would mainly be an access point's MAC so all clients associated with that AP would be deauthenticated, but you can also put a client MAC here to target that one client and any other devices that communicate with it.
+
 
 ### Advanced
 ```shell
@@ -47,7 +53,7 @@ The -m option sets a max number of client/AP combos that the script will attempt
 All options:
 
 ```shell
-python wifijammer.py [-c CHANNEL] [-d] [-i INTERFACE] [-m MAXIMUM] [-n] [-p PACKETS] [-s SKIP] [-t TIME INTERVAL]
+python wifijammer.py [-a AP MAC] [-c CHANNEL] [-d] [-i INTERFACE] [-m MAXIMUM] [-n] [-p PACKETS] [-s SKIP] [-t TIME INTERVAL]
 ```
 
 ### To do

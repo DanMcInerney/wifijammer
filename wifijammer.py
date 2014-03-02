@@ -146,7 +146,10 @@ def channel_hop(mon_iface, args):
     in order to populate the deauth list nicely. After that it goes as fast as it can
     '''
     global monchannel, first_pass
+
     channelNum = 0
+    err = None
+
     while 1:
         if args.channel:
             with lock:
@@ -159,16 +162,23 @@ def channel_hop(mon_iface, args):
                     first_pass = 0
             with lock:
                 monchannel = str(channelNum)
-        proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel], stdout=DN, stderr=PIPE)
-        err = None
-        for line in proc.communicate()[1].split('\n'):
-            if len(line) > 2: # iw dev shouldnt display output unless there's an error
-                err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
+
+            proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel], stdout=DN, stderr=PIPE)
+            for line in proc.communicate()[1].split('\n'):
+                if len(line) > 2: # iw dev shouldnt display output unless there's an error
+                    err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
 
         output(err, monchannel)
+        if args.channel:
+            time.sleep(.1)
+        else:
+            # For the first channel hop thru, do not deauth
+            if first_pass == 1:
+                time.sleep(1)
+                continue
+
         deauth(monchannel)
-        if first_pass == 1:
-            time.sleep(1)
+
 
 def deauth(monchannel):
     '''
@@ -176,10 +186,9 @@ def deauth(monchannel):
     multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
     '''
-    global first_pass
-    if first_pass == 1:
-        return
+
     pkts = []
+
     if len(clients_APs) > 0:
         with lock:
             for x in clients_APs:

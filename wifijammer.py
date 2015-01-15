@@ -66,7 +66,10 @@ def get_mon_iface(args):
 def iwconfig():
     monitors = []
     interfaces = {}
-    proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
+    try:
+        proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
+    except OSError:
+        sys.exit('['+R+'-'+W+'] Could not execute "iwconfig"')
     for line in proc.communicate()[0].split('\n'):
         if len(line) == 0: continue # Isn't an empty string
         if line[0] != ' ': # Doesn't start with space

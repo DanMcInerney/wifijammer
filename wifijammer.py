@@ -66,7 +66,10 @@ def get_mon_iface(args):
 def iwconfig():
     monitors = []
     interfaces = {}
-    proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
+    try:
+        proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
+    except OSError:
+        sys.exit('['+R+'-'+W+'] Could not execute "iwconfig"')
     for line in proc.communicate()[0].split('\n'):
         if len(line) == 0: continue # Isn't an empty string
         if line[0] != ' ': # Doesn't start with space
@@ -163,7 +166,12 @@ def channel_hop(mon_iface, args):
             with lock:
                 monchannel = str(channelNum)
 
-            proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel], stdout=DN, stderr=PIPE)
+            try:
+                proc = Popen(['iw', 'dev', mon_iface, 'set', 'channel', monchannel], stdout=DN, stderr=PIPE)
+            except OSError:
+                print '['+R+'-'+W+'] Could not execute "iw"'
+                os.kill(os.getpid(),SIGINT)
+                sys.exit(1)
             for line in proc.communicate()[1].split('\n'):
                 if len(line) > 2: # iw dev shouldnt display output unless there's an error
                     err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W

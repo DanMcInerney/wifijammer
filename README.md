@@ -29,7 +29,7 @@ Deauthenticate all devices with which 00:0E:DA:DE:24:8E communicates and skips c
 
 ### Advanced
 ```shell
-python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d
+python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d --world
 ```
 
 -c, Set the monitor mode interface to only listen and deauth clients or APs on channel 1
@@ -41,6 +41,8 @@ python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d
 -s, Do not deauth the MAC DL:3D:8D:JJ:39:52. Ignoring a certain MAC address is handy in case you want to tempt people to join your access point in cases of wanting to use LANs.py or a Pineapple on them.
 
 -d, Do not send deauths to access points' broadcast address; this will speed up the deauths to the clients that are found
+
+--world, Set the max channel to 13. In N. America the max channel standard is 11, but the rest of the world uses 13 channels so use this option if you're not in N. America
 
 
 ### Walking/driving around

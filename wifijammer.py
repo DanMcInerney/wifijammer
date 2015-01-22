@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
     parser.add_argument("-d", "--directedonly", help="Skip the deauthentication packets to the broadcast address of the access points and only send them to client/AP pairs", action='store_true')
     parser.add_argument("-a", "--accesspoint", help="Enter the MAC address of a specific access point to target")
+    parser.add_argument("--world", help="N. American standard is 11 channels but the rest of the world it's 13 so this options enables the scanning of 13 channels", action="store_true")
 
     return parser.parse_args()
 
@@ -151,6 +152,7 @@ def channel_hop(mon_iface, args):
     global monchannel, first_pass
 
     channelNum = 0
+    maxChan = 11 if not args.world else 13
     err = None
 
     while 1:
@@ -159,7 +161,7 @@ def channel_hop(mon_iface, args):
                 monchannel = args.channel
         else:
             channelNum +=1
-            if channelNum > 11:
+            if channelNum > maxChan:
                 channelNum = 1
                 with lock:
                     first_pass = 0
@@ -334,7 +336,6 @@ def APs_add(clients_APs, APs, pkt, chan_arg):
             return APs.append([bssid, ap_channel, ssid])
 
 def clients_APs_add(clients_APs, addr1, addr2):
-
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:

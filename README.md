@@ -58,9 +58,6 @@ All options:
 python wifijammer.py [-a AP MAC] [-c CHANNEL] [-d] [-i INTERFACE] [-m MAXIMUM] [-n] [-p PACKETS] [-s SKIP] [-t TIME INTERVAL]
 ```
 
-### To do
-Replace mutex locks with Queue
-
 
 License
 -------

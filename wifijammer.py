@@ -297,7 +297,7 @@ def cb(pkt):
 
             # Check if it's added to our AP list
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
-                APs_add(clients_APs, APs, pkt, args.channel)
+                APs_add(clients_APs, APs, pkt, args.channel, args.world)
 
             # Ignore all the noisy packets like spanning tree
             if noise_filter(args.skip, pkt.addr1, pkt.addr2):

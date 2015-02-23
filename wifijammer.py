@@ -307,14 +307,18 @@ def cb(pkt):
             if pkt.type in [1, 2]:
                 clients_APs_add(clients_APs, pkt.addr1, pkt.addr2)
 
-def APs_add(clients_APs, APs, pkt, chan_arg):
+def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
     ssid       = pkt[Dot11Elt].info
     bssid      = pkt[Dot11].addr3
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
         # Prevent 5GHz APs from being thrown into the mix
-        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+        print args.world
+        if args.world == 'True':
+            chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
+        else:
+            chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
             return
 

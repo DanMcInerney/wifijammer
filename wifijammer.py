@@ -313,8 +313,6 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
-        # Prevent 5GHz APs from being thrown into the mix
-        print args.world
         if args.world == 'True':
             chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
         else:

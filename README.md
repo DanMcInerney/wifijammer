@@ -32,24 +32,24 @@ Deauthenticate all devices with which 00:0E:DA:DE:24:8E communicates and skips c
 python wifijammer.py -c 1 -p 5 -t .00001 -s DL:3D:8D:JJ:39:52 -d --world
 ```
 
--c, Set the monitor mode interface to only listen and deauth clients or APs on channel 1
+* `-c`, Set the monitor mode interface to only listen and deauth clients or APs on channel 1
 
--p, Send 5 packets to the client from the AP and 5 packets to the AP from the client along with 5 packets to the broadcast address of the AP
+* `-p`, Send 5 packets to the client from the AP and 5 packets to the AP from the client along with 5 packets to the broadcast address of the AP
 
--t, Set a time interval of .00001 seconds between sending each deauth (try this if you get a scapy error like 'no buffer space')
+* `-t`, Set a time interval of .00001 seconds between sending each deauth (try this if you get a scapy error like 'no buffer space')
 
--s, Do not deauth the MAC DL:3D:8D:JJ:39:52. Ignoring a certain MAC address is handy in case you want to tempt people to join your access point in cases of wanting to use LANs.py or a Pineapple on them.
+* `-s`, Do not deauth the MAC DL:3D:8D:JJ:39:52. Ignoring a certain MAC address is handy in case you want to tempt people to join your access point in cases of wanting to use LANs.py or a Pineapple on them.
 
--d, Do not send deauths to access points' broadcast address; this will speed up the deauths to the clients that are found
+* `-d`, Do not send deauths to access points' broadcast address; this will speed up the deauths to the clients that are found
 
---world, Set the max channel to 13. In N. America the max channel standard is 11, but the rest of the world uses 13 channels so use this option if you're not in N. America
+* `--world`, Set the max channel to 13. In N. America the max channel standard is 11, but the rest of the world uses 13 channels so use this option if you're not in N. America
 
 
 ### Walking/driving around
 ```shell
 python wifijammer.py -m 10
 ```
-The -m option sets a max number of client/AP combos that the script will attempt to deauth. When the max number is reached, it clears and repopulates its list based on what traffic it sniffs in the area. This allows you to constantly update the deauth list with client/AP combos who have the strongest signal in case you were not stationary. If you want to set a max and not have the deauth list clear itself when the max is hit, just add the -n option like: -m 10 -n
+The `-m` option sets a max number of client/AP combos that the script will attempt to deauth. When the max number is reached, it clears and repopulates its list based on what traffic it sniffs in the area. This allows you to constantly update the deauth list with client/AP combos who have the strongest signal in case you were not stationary. If you want to set a max and not have the deauth list clear itself when the max is hit, just add the -n option like: `-m 10 -n`
 
 
 All options:

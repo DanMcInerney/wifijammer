@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
     parser.add_argument("-d", "--directedonly", help="Skip the deauthentication packets to the broadcast address of the access points and only send them to client/AP pairs", action='store_true')
     parser.add_argument("-a", "--accesspoint", help="Enter the MAC address of a specific access point to target")
+    parser.add_argument("-e", "--essid", help="Enter the ESSID of a specific access point to target")
     parser.add_argument("--world", help="N. American standard is 11 channels but the rest of the world it's 13 so this options enables the scanning of 13 channels", action="store_true")
 
     return parser.parse_args()
@@ -314,7 +315,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
         if args.world == 'True':
-            chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
+            chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
         else:
             chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
@@ -323,7 +324,12 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
         if chan_arg:
             if ap_channel != chan_arg:
                 return
-
+#### custom condition APs:
+#        if not ssid:
+#            return
+#        if args.essid != ssid:
+#                return
+#### custom condition end
     except Exception as e:
         return
 
@@ -338,6 +344,11 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
             return APs.append([bssid, ap_channel, ssid])
 
 def clients_APs_add(clients_APs, addr1, addr2):
+#### custom condition for clients_APs
+#### ESSID unknown
+
+#### custom condition for clients_APs end
+
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:
@@ -360,6 +371,11 @@ def clients_APs_add(clients_APs, addr1, addr2):
 def AP_check(addr1, addr2):
     for ap in APs:
         if ap[0].lower() in addr1.lower() or ap[0].lower() in addr2.lower():
+#### custom condition for client_APs with ESSID
+            ssid = ap[2]
+            if ssid != args.essid:
+                return
+#### custom condition for client_APs end
             with lock:
                 return clients_APs.append([addr1, addr2, ap[1], ap[2]])
 

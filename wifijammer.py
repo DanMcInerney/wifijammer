@@ -327,7 +327,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
 #### custom condition APs:
 #        if not ssid:
 #            return
-#        if args.essid != ssid:
+#        if  ssid.find( args.essid ) == -1:
 #                return
 #### custom condition end
     except Exception as e:
@@ -344,15 +344,10 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
             return APs.append([bssid, ap_channel, ssid])
 
 def clients_APs_add(clients_APs, addr1, addr2):
-#### custom condition for clients_APs
-#### ESSID unknown
-
-#### custom condition for clients_APs end
-
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:
-                return clients_APs.append([addr1, addr2, monchannel])
+                return clients_APs_append( addr1, addr2, monchannel )
         else:
             AP_check(addr1, addr2)
 
@@ -366,12 +361,21 @@ def clients_APs_add(clients_APs, addr1, addr2):
             return AP_check(addr1, addr2)
         else:
             with lock:
-                return clients_APs.append([addr1, addr2, monchannel])
+                return clients_APs_append( addr1, addr2, monchannel )
+
+def clients_APs_append( addr1, addr2, monchannel ):
+#### custom condition for clients_APs
+#### APs doesn't exist
+    # ignore if no APs
+    return
+#### custom condition for clients_APs end
+    return clients_APs.append([addr1, addr2, monchannel])
 
 def AP_check(addr1, addr2):
     for ap in APs:
         if ap[0].lower() in addr1.lower() or ap[0].lower() in addr2.lower():
-#### custom condition for client_APs with ESSID
+#### custom condition for client_APs
+#### check ESSID from APs
             ssid = ap[2]
             if ssid != args.essid:
                 return

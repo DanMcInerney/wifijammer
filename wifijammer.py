@@ -30,7 +30,7 @@ def parse_args():
 	#Create the arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-s", "--skip", help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
+    parser.add_argument("-s", "--skip", nargs='*', help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
     parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")
     parser.add_argument("-c", "--channel", help="Listen on and deauth only clients on the specified channel. Example: -c 6")
     parser.add_argument("-m", "--maximum", help="Choose the maximum number of clients to deauth. List of clients will be emptied and repopulated after hitting the limit. Example: -m 5")
@@ -260,7 +260,7 @@ def noise_filter(skip, addr1, addr2):
     # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
     ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
     if skip:
-        ignore.append(skip)
+        ignore.extend(skip)
     for i in ignore:
         if i in addr1 or i in addr2:
             return True

@@ -261,9 +261,10 @@ def noise_filter(skip, addr1, addr2):
     # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
     ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
     if skip:
-        ignore.extend(skip)
+        for i in skip:
+            ignore.append(i.lower())
     for i in ignore:
-        if i in addr1 or i in addr2:
+        if i in addr1.lower() or i in addr2.lower():
             return True
 
 def cb(pkt):
@@ -376,9 +377,10 @@ def AP_check(addr1, addr2):
         if ap[0].lower() in addr1.lower() or ap[0].lower() in addr2.lower():
 #### custom condition for client_APs
 #### check ESSID from APs
-            ssid = ap[2]
-            if ssid != args.essid:
-                return
+            if args.essid:
+                ssid = ap[2]
+                if ssid not in args.essid:
+                    return
 #### custom condition for client_APs end
             with lock:
                 return clients_APs.append([addr1, addr2, ap[1], ap[2]])

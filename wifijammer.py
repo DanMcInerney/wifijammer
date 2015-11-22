@@ -289,6 +289,8 @@ def cb(pkt):
     # than updating on the fly in order to avoid costly for loops that require a lock
     if pkt.haslayer(Dot11):
         if pkt.addr1 and pkt.addr2:
+            pkt.addr1 = pkt.addr1.lower()
+            pkt.addr2 = pkt.addr2.lower()
 
             # Filter out all other APs and clients if asked
             if args.accesspoint:
@@ -309,7 +311,7 @@ def cb(pkt):
 
 def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
     ssid       = pkt[Dot11Elt].info
-    bssid      = pkt[Dot11].addr3
+    bssid      = pkt[Dot11].addr3.lower()
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
@@ -368,6 +370,7 @@ def stop(signal, frame):
         sys.exit('\n['+R+'!'+W+'] Closing')
     else:
         remove_mon_iface(mon_iface)
+        os.system('service network-manager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
 
 if __name__ == "__main__":
@@ -395,5 +398,6 @@ if __name__ == "__main__":
        sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
+        os.system('service network-manager restart')
         print '\n['+R+'!'+W+'] Closing'
         sys.exit(0)

@@ -1,5 +1,5 @@
-wifijammer
-==========
+wifijammer - Czar edit
+======================
 
 Continuously jam all wifi clients and access points within range. The effectiveness of this script is constrained by your wireless card. Alfa cards seem to effectively jam within about a block radius with heavy access point saturation. Granularity is given in the options for more effective targeting. 
 

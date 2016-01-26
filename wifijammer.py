@@ -230,7 +230,7 @@ def deauth(monchannel):
         if not args.timeinterval:
             args.timeinterval = 0
         if not args.packets:
-            args.packets = 10
+            args.packets = 15
 
         for p in pkts:
             send(p, inter=float(args.timeinterval), count=int(args.packets))

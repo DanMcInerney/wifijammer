@@ -153,7 +153,7 @@ def channel_hop(mon_iface, args):
     global monchannel, first_pass
 
     channelNum = 0
-    maxChan = 11 if not args.world else 13
+    maxChan = 12 if not args.world else 14
     err = None
 
     while 1:
@@ -230,7 +230,7 @@ def deauth(monchannel):
         if not args.timeinterval:
             args.timeinterval = 0
         if not args.packets:
-            args.packets = 1
+            args.packets = 15
 
         for p in pkts:
             send(p, inter=float(args.timeinterval), count=int(args.packets))
@@ -317,7 +317,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
-        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'] if not args.world else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'] 
+        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'] if not args.world else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'] 
         if ap_channel not in chans:
             return
 
@@ -369,7 +369,6 @@ def stop(signal, frame):
         sys.exit('\n['+R+'!'+W+'] Closing')
     else:
         remove_mon_iface(mon_iface)
-        os.system('service network-manager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
 
 if __name__ == "__main__":
@@ -397,6 +396,6 @@ if __name__ == "__main__":
        sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
-        os.system('service network-manager restart')
+        os.system('ifconfig %s down')
         print '\n['+R+'!'+W+'] Closing'
         sys.exit(0)

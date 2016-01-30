@@ -52,8 +52,9 @@ def get_mon_iface(args):
     global monitor_on
     monitors, interfaces = iwconfig()
     if args.interface:
-        monitor_on = True
-        return args.interface
+        interface = args.interface
+        monmode = start_mon_mode(interface)
+        return monmode
     if len(monitors) > 0:
         monitor_on = True
         return monitors[0]

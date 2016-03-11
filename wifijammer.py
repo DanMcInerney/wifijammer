@@ -340,14 +340,17 @@ def cb(pkt):
                 if args.accesspoint not in [pkt.addr1, pkt.addr2]:
                     return
 
+            if args.skip == pkt.addr2:
+                return
+
             # Check if it's added to our AP list
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
                 APs_add(clients_APs, APs, pkt, args.channel, args.world)
 
             # Ignore all the noisy packets like spanning tree
 
-            if noise_filter(skip, pkt.addr1, pkt.addr2):
-                return
+            #if noise_filter(skip, pkt.addr1, pkt.addr2):
+            #    return
 
             # Management = 1, data = 2
             if pkt.type in [1, 2]:

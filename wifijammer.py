@@ -342,7 +342,7 @@ def cb(pkt):
 
             if args.skip:
                 if args.skip.lower() == pkt.addr2:
-                return
+                    return
 
             # Check if it's added to our AP list
             if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):

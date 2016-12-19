@@ -363,7 +363,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
-        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'] if not args.world else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'] 
+        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'] if not args.world else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
         if ap_channel not in chans:
             return
 
@@ -417,8 +417,8 @@ def stop(signal, frame):
         remove_mon_iface(mon_iface)
         os.system('service network-manager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
-
-if __name__ == "__main__":
+        
+def main():
     if os.geteuid():
         sys.exit('['+R+'-'+W+'] Please run as root')
     clients_APs = []
@@ -446,3 +446,6 @@ if __name__ == "__main__":
         os.system('service network-manager restart')
         print '\n['+R+'!'+W+'] Closing'
         sys.exit(0)
+
+if __name__ == "__main__":
+    main()

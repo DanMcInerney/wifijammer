@@ -32,6 +32,7 @@ APs = []
 DN = open(os.devnull, 'w')
 lock = Lock()
 monitor_on = None
+mon_iface = None
 
 def parse_args():
     #Create the arguments

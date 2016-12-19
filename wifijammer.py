@@ -433,10 +433,10 @@ def main():
     if os.geteuid():
         sys.exit('['+R+'-'+W+'] Please run as root')
 
+    global mon_iface
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface
     mon_MAC = mon_mac(mon_iface)
-
 
     # Start channel hopping
     hop = Thread(target=channel_hop, args=(mon_iface, args))

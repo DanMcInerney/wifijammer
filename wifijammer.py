@@ -202,6 +202,7 @@ def channel_hop(mon_iface, args):
     in order to populate the deauth list nicely. After that it goes as fast as it can
     '''
     global monchannel, first_pass, mon_iface
+    print(mon_iface, monchannel)
 
     channelNum = 0
     maxChan = 11 if not args.world else 13

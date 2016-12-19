@@ -26,13 +26,14 @@ C  = '\033[36m' # cyan
 GR = '\033[37m' # gray
 T  = '\033[93m' # tan
 
-# moved from main
+# Global variables
 clients_APs = []
 APs = []
 DN = open(os.devnull, 'w')
 lock = Lock()
 monitor_on = None
 mon_iface = None
+first_pass = 1
 
 def parse_args():
     #Create the arguments
@@ -435,7 +436,7 @@ def main():
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface
     mon_MAC = mon_mac(mon_iface)
-    first_pass = 1
+
 
     # Start channel hopping
     hop = Thread(target=channel_hop, args=(mon_iface, args))

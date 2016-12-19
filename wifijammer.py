@@ -26,6 +26,13 @@ C  = '\033[36m' # cyan
 GR = '\033[37m' # gray
 T  = '\033[93m' # tan
 
+# moved from main
+clients_APs = []
+APs = []
+DN = open(os.devnull, 'w')
+lock = Lock()
+monitor_on = None
+
 def parse_args():
     #Create the arguments
     parser = argparse.ArgumentParser()
@@ -417,16 +424,13 @@ def stop(signal, frame):
         remove_mon_iface(mon_iface)
         os.system('service network-manager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
-        
+
 def main():
+    args = parse_args()
+
     if os.geteuid():
         sys.exit('['+R+'-'+W+'] Please run as root')
-    clients_APs = []
-    APs = []
-    DN = open(os.devnull, 'w')
-    lock = Lock()
-    args = parse_args()
-    monitor_on = None
+
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface
     mon_MAC = mon_mac(mon_iface)

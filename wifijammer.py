@@ -201,8 +201,7 @@ def channel_hop(mon_iface, args):
     First time it runs through the channels it stays on each channel for 5 seconds
     in order to populate the deauth list nicely. After that it goes as fast as it can
     '''
-    global monchannel, first_pass, mon_iface
-    print(mon_iface, monchannel)
+    global monchannel, first_pass
 
     channelNum = 0
     maxChan = 11 if not args.world else 13

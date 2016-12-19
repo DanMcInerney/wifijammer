@@ -8,7 +8,8 @@ setup(
     description = "Continuously jam all wifi clients and access points within range.",
     keywords = "WiFi 802.11 jammer deauth",
     url = "https://github.com/DanMcInerney/wifijammer",
-    packages=find_packages(),
+    # packages=find_packages(),
+    py_modules=['wifijammer'],
     entry_points={
         'console_scripts':
         ['wifijammer = wifijammer:main']

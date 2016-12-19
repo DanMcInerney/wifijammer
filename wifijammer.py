@@ -26,6 +26,15 @@ C  = '\033[36m' # cyan
 GR = '\033[37m' # gray
 T  = '\033[93m' # tan
 
+# Global variables
+clients_APs = []
+APs = []
+DN = open(os.devnull, 'w')
+lock = Lock()
+monitor_on = None
+mon_iface = None
+first_pass = 1
+
 def parse_args():
     #Create the arguments
     parser = argparse.ArgumentParser()
@@ -363,7 +372,7 @@ def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
-        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'] if not args.world else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'] 
+        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'] if not args.world else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
         if ap_channel not in chans:
             return
 
@@ -418,19 +427,16 @@ def stop(signal, frame):
         os.system('service network-manager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
 
-if __name__ == "__main__":
+def main():
+    args = parse_args()
+
     if os.geteuid():
         sys.exit('['+R+'-'+W+'] Please run as root')
-    clients_APs = []
-    APs = []
-    DN = open(os.devnull, 'w')
-    lock = Lock()
-    args = parse_args()
-    monitor_on = None
+
+    global mon_iface
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface
     mon_MAC = mon_mac(mon_iface)
-    first_pass = 1
 
     # Start channel hopping
     hop = Thread(target=channel_hop, args=(mon_iface, args))
@@ -446,3 +452,6 @@ if __name__ == "__main__":
         os.system('service network-manager restart')
         print '\n['+R+'!'+W+'] Closing'
         sys.exit(0)
+
+if __name__ == "__main__":
+    main()

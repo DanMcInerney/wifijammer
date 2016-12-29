@@ -32,6 +32,8 @@ def parse_args():
 
     parser.add_argument("-s",
                         "--skip",
+                        nargs='*',
+                        default=[],
                         help="Skip deauthing this MAC address. \
                                 Example: -s 00:11:BB:33:44:AA")
     parser.add_argument("-i",
@@ -303,7 +305,7 @@ def noise_filter(skip, addr1, addr2):
     # Broadcast, broadcast, IPv6mcast, spanning tree, spanning tree, multicast, broadcast
     ignore = ['ff:ff:ff:ff:ff:ff', '00:00:00:00:00:00', '33:33:00:', '33:33:ff:', '01:80:c2:00:00:00', '01:00:5e:', mon_MAC]
     if skip:
-        ignore.append(skip)
+        ignore += [addr.lower() for addr in skip]
     for i in ignore:
         if i in addr1 or i in addr2:
             return True
@@ -341,7 +343,7 @@ def cb(pkt):
                     return
 
             if args.skip:
-                if args.skip.lower() == pkt.addr2:
+                if pkt.addr2 in args.skip:
                     return
 
             # Check if it's added to our AP list
@@ -426,6 +428,7 @@ if __name__ == "__main__":
     DN = open(os.devnull, 'w')
     lock = Lock()
     args = parse_args()
+    args.skip = list(map(str.lower, args.skip))
     monitor_on = None
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface

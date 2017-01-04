@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR) # Shut up Scapy
@@ -79,7 +80,9 @@ def parse_args():
                         action='store_true')
     parser.add_argument("-a",
                         "--accesspoint",
-                        help="Enter the MAC address of a specific access point to target")
+                        nargs='*',
+                        default=[],
+                        help="Enter the SSID or MAC address of a specific access point to target")
     parser.add_argument("--world",
                         help="N. American standard is 11 channels but the rest \
                                 of the world it's 13 so this options enables the \
@@ -339,7 +342,12 @@ def cb(pkt):
 
             # Filter out all other APs and clients if asked
             if args.accesspoint:
-                if args.accesspoint.lower() not in [pkt.addr1, pkt.addr2]:
+                # track bssid for essid
+                if (pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)) and pkt[Dot11Elt].info in args.accesspoint:
+                    args.accesspoint.add(pkt[Dot11].addr3.lower())
+                # bail if bssid is not in target list
+                if not args.accesspoint.intersection([pkt.addr1.lower(), pkt.addr2.lower()]):
+                    # pkt does not match our target list 
                     return
 
             if args.skip:
@@ -429,6 +437,8 @@ if __name__ == "__main__":
     lock = Lock()
     args = parse_args()
     args.skip = list(map(str.lower, args.skip))
+    # lowercase bssids while leaving essids intact
+    args.accesspoint = set(_.lower() if ':' in _ else _ for _ in args.accesspoint)
     monitor_on = None
     mon_iface = get_mon_iface(args)
     conf.iface = mon_iface
@@ -443,7 +453,7 @@ if __name__ == "__main__":
     signal(SIGINT, stop)
 
     try:
-       sniff(iface=mon_iface, store=0, prn=cb)
+        sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
         os.system('service network-manager restart')

@@ -58,11 +58,6 @@ All options:
 python wifijammer.py [-a AP MAC] [-c CHANNEL] [-d] [-i INTERFACE] [-m MAXIMUM] [-n] [-p PACKETS] [-s SKIP] [-t TIME INTERVAL]
 ```
 
-Technical breakdown
--------
-[How to kick everyone around you off wifi with python](http://danmcinerney.org/how-to-kick-everyone-around-you-off-wifi-with-python/)
-
-
 License
 -------
 

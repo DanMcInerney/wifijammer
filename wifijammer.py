@@ -165,17 +165,17 @@ def get_iface(interfaces):
 def start_mon_mode(interface):
     print '['+G+'+'+W+'] Starting monitor mode off '+G+interface+W
     try:
-        os.system('ifconfig %s down' % interface)
+        os.system('ip link set %s down' % interface)
         os.system('iwconfig %s mode monitor' % interface)
-        os.system('ifconfig %s up' % interface)
+        os.system('ip link set %s up' % interface)
         return interface
     except Exception:
         sys.exit('['+R+'-'+W+'] Could not start monitor mode')
 
 def remove_mon_iface(mon_iface):
-    os.system('ifconfig %s down' % mon_iface)
+    os.system('ip link set %s down' % mon_iface)
     os.system('iwconfig %s mode managed' % mon_iface)
-    os.system('ifconfig %s up' % mon_iface)
+    os.system('ip link set %s up' % mon_iface)
 
 def mon_mac(mon_iface):
     '''

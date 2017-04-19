@@ -110,7 +110,7 @@ def get_mon_iface(args):
         print '['+G+'*'+W+'] Finding the most powerful interface...'
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
-        return monmode
+        return interface
 
 def iwconfig():
     monitors = []

@@ -360,8 +360,8 @@ def cb(pkt):
 
             # Ignore all the noisy packets like spanning tree
 
-            #if noise_filter(skip, pkt.addr1, pkt.addr2):
-            #    return
+            if noise_filter(skip, pkt.addr1, pkt.addr2):
+                return
 
             # Management = 1, data = 2
             if pkt.type in [1, 2]:

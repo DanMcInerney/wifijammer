@@ -108,6 +108,7 @@ def get_mon_iface(args):
     else:
         # Start monitor mode on a wireless interface
         print '['+G+'*'+W+'] Finding the most powerful interface...'
+        os.system('pkill NetworkManager')
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
         return monmode
@@ -422,6 +423,7 @@ def AP_check(addr1, addr2):
 
 def stop(signal, frame):
     if monitor_on:
+        os.system('service network-manager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
     else:
         remove_mon_iface(mon_iface)

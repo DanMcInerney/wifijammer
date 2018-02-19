@@ -88,7 +88,11 @@ def parse_args():
                                 of the world it's 13 so this options enables the \
                                 scanning of 13 channels",
                         action="store_true")
-
+    parser.add_argument("--dry-run",
+                        dest="dry_run",
+                        default=False,
+                        action='store_true',
+                        help="Do not send any deauth packets.")
     return parser.parse_args()
 
 
@@ -235,8 +239,8 @@ def channel_hop(mon_iface, args):
             if first_pass == 1:
                 time.sleep(1)
                 continue
-
-        deauth(monchannel)
+        if not args.dry_run:
+	    deauth(monchannel)
 
 
 def deauth(monchannel):
@@ -245,7 +249,6 @@ def deauth(monchannel):
     multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
     '''
-
     pkts = []
 
     if len(clients_APs) > 0:
@@ -285,6 +288,7 @@ def deauth(monchannel):
 
 def output(err, monchannel):
     os.system('clear')
+    print P+'***DRY-RUN***'+W
     if err:
         print err
     else:

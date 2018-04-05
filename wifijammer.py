@@ -288,7 +288,8 @@ def deauth(monchannel):
 
 def output(err, monchannel):
     os.system('clear')
-    print P+'***DRY-RUN***'+W
+    if args.dry_run:
+        print P+'***DRY-RUN***'+W
     if err:
         print err
     else:

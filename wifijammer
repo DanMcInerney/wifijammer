@@ -436,13 +436,13 @@ def stop(signal, frame):
         sys.exit('\n['+R+'!'+W+'] Closing')
 
 if __name__ == "__main__":
+    args = parse_args()
     if os.geteuid():
         sys.exit('['+R+'-'+W+'] Please run as root')
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')
     lock = Lock()
-    args = parse_args()
     args.skip = list(map(str.lower, args.skip))
     # lowercase bssids while leaving essids intact
     args.accesspoint = set(_.lower() if ':' in _ else _ for _ in args.accesspoint)

@@ -1,0 +1,47 @@
+total=23, 5GHz=13, 2GHz=10, ibss=0, hidden=0, passpoint=0, airport=1
+
+
+'AquaFi' {length = 6, bytes = 0x417175614669}, bssid=e6:e1:30:2e:8c:ab, channel=[1 (20 MHz, Active)], cc=(null), type=11n, rssi=-61, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'ATT7YPS6pT' {length = 10, bytes = 0x41545437595053367054}, bssid=dc:7f:a4:51:03:ee, channel=[36 (80 MHz, Active)], cc=US, type=11ac, rssi=-81, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'ATTqfmhFPi' {length = 10, bytes = 0x41545471666d68465069}, bssid=fc:ae:34:03:16:10, channel=[1 (20 MHz, Active)], cc=(null), type=11n, rssi=-68, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'Belkin.5A90' {length = 11, bytes = 0x42656c6b696e2e35413930}, bssid=94:44:52:87:9a:90, channel=[11 (40 MHz, Active)], cc=(null), type=11n, rssi=-74, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=[mcast=ccmp, ucast={ ccmp }, auths={ psk }], wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'Belkin.5A90_5GHz' {length = 16, bytes = 0x42656c6b696e2e354139305f3547487a}, bssid=94:44:52:87:9a:92, channel=[48 (20 MHz, Active)], cc=(null), type=11n, rssi=-85, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=[mcast=ccmp, ucast={ ccmp }, auths={ psk }], wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'dondiego' {length = 8, bytes = 0x646f6e646965676f}, bssid=48:d7:05:f0:f3:57, channel=[149 (40 MHz, Active)], cc=US, type=11n, rssi=-88, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, airport=[AirPort Express 802.11n w/ Simultaneous Dual-Band (2nd Generation)]
+
+'Jason123' {length = 8, bytes = 0x4a61736f6e313233}, bssid=00:fa:21:6f:e4:62, channel=[11 (20 MHz, Active)], cc=(null), type=11n, rssi=-66, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'Mendoza-2G' {length = 10, bytes = 0x4d656e646f7a612d3247}, bssid=a0:8e:78:04:77:26, channel=[6 (20 MHz, Active)], cc=US, type=11n, rssi=-69, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'Mendoza-5G' {length = 10, bytes = 0x4d656e646f7a612d3547}, bssid=a0:8e:78:04:77:27, channel=[44 (80 MHz, Active)], cc=US, type=11ac, rssi=-82, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFi18-5G' {length = 19, bytes = 0x4d79537065637472756d5769466931382d3547}, bssid=ac:3b:77:41:a1:1f, channel=[161 (80 MHz, Active)], cc=US, type=11ac, rssi=-86, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFi24-2G' {length = 19, bytes = 0x4d79537065637472756d5769466932342d3247}, bssid=b8:ee:0e:bc:f9:2a, channel=[6 (20 MHz, Active)], cc=US, type=11n, rssi=-41, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFi24-5G' {length = 19, bytes = 0x4d79537065637472756d5769466932342d3547}, bssid=b8:ee:0e:bc:f9:2b, channel=[153 (80 MHz, Active)], cc=US, type=11ac, rssi=-54, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFi99-2G' {length = 19, bytes = 0x4d79537065637472756d5769466939392d3247}, bssid=7c:db:98:2f:98:97, channel=[5 (20 MHz, Active)], cc=US, type=11ac, rssi=-62, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFi99-5G' {length = 19, bytes = 0x4d79537065637472756d5769466939392d3547}, bssid=7c:db:98:2f:98:98, channel=[40 (80 MHz, Active)], cc=US, type=11ac, rssi=-77, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFid8-5G' {length = 19, bytes = 0x4d79537065637472756d5769466964382d3547}, bssid=f4:6b:ef:31:2b:df, channel=[149 (80 MHz, Active)], cc=US, type=11ac, rssi=-84, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFie0-2G' {length = 19, bytes = 0x4d79537065637472756d5769466965302d3247}, bssid=b8:66:85:5a:54:e6, channel=[11 (20 MHz, Active)], cc=(null), type=11n, rssi=-52, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'MySpectrumWiFie0-5G' {length = 19, bytes = 0x4d79537065637472756d5769466965302d3547}, bssid=b8:66:85:5a:54:e7, channel=[157 (80 MHz, Active)], cc=(null), type=11ac, rssi=-59, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'PS4-291149FC9499' {length = 16, bytes = 0x5053342d323931313439464339343939}, bssid=e8:61:7e:3c:dd:f5, channel=[6 (20 MHz, Active)], cc=(null), type=11n, rssi=-90, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0x0], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'ROMAN' {length = 5, bytes = 0x524f4d414e}, bssid=c0:3f:0e:72:f7:02, channel=[44 (40 MHz, Active)], cc=(null), type=11n, rssi=-84, rsn=[mcast=tkip, ucast={ aes_ccm tkip }, auths={ psk }, mfp=no, caps=0x0], wpa=[mcast=tkip, ucast={ ccmp tkip }, auths={ psk }], wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'TC8715DAA' {length = 9, bytes = 0x544338373135444141}, bssid=e0:88:5d:67:0c:b0, channel=[1 (20 MHz, Active)], cc=(null), type=11n, rssi=-74, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=capable, caps=0x8c], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+'WIFIC9F98B-5G' {length = 13, bytes = 0x574946494339463938422d3547}, bssid=28:56:5a:c9:f9:90, channel=[48 (40 MHz, Active)], cc=(null), type=11ac, rssi=-84, rsn=[mcast=aes_ccm, ucast={ aes_ccm }, auths={ psk }, mfp=no, caps=0xc], wpa=(null), wep=no, ibss=no, ph=no, swap=no, hs20=no, 
+
+
+

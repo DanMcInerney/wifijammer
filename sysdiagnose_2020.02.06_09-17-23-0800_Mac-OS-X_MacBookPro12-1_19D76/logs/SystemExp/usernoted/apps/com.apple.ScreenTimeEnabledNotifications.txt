@@ -1,0 +1,22 @@
+		path: "/System/Library/UserNotifications/Bundles/com.apple.ScreenTimeEnabledNotifications.bundle"
+		identifier: "com.apple.ScreenTimeEnabledNotifications"
+		daemon launching messages
+			[ ]
+		access count: 0
+		flags: "[playSounds,alertAsAlert,suppressFromPrefs,hidesInLockscreen,usesModernInterface,prefersDaemonForResponse,askedForPermission,askedForCriticalPermission,allowsNotifications]"
+		prefs:
+			app_pref_shows_in_notification_center: true
+			app_prefs_managed: false
+			app_prefs_alert_style: 2
+			allow_notifications: true
+			app_hidden_from_ls: true
+			app_shows_summary: false
+			app_authorizations: 6
+			app_content_hidden_lockscreen: true
+			app_content_hidden: false
+			app_prefs_play_sounds: true
+			app_pref_notifications_to_show: 20
+			app_prefs_badge_icon: false
+			app_uses_modern_api: true
+			allow_critical: false
+			app_type: 1

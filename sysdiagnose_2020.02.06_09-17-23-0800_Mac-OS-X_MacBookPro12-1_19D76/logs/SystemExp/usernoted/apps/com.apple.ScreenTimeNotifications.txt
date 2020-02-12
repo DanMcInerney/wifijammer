@@ -1,0 +1,35 @@
+		path: "/System/Library/UserNotifications/Bundles/com.apple.ScreenTimeNotifications.bundle"
+		identifier: "com.apple.ScreenTimeNotifications"
+		daemon launching messages
+			[ ]
+		access count: 0
+		flags: "[playSounds,alertAsBanner,hidesInLockscreen,usesModernInterface,prefersDaemonForResponse,askedForPermission,askedForCriticalPermission,allowsNotifications]"
+		prefs:
+			app_uses_modern_api: true
+			app_shows_summary: false
+			app_content_hidden: false
+			app_pref_shows_in_notification_center: true
+			app_prefs_play_sounds: true
+			app_hidden_from_ls: true
+			app_prefs_alert_style: 1
+			app_pref_notifications_to_show: 20
+			allow_critical: false
+			app_prefs_badge_icon: false
+			app_content_hidden_lockscreen: true
+			app_authorizations: 6
+			app_type: 1
+			allow_notifications: true
+			app_prefs_managed: false
+		delivered notifications:
+			================================
+				uuid: 3D429977-870A-4CE4-871E-3DD0B6B88F1C
+				title: "<hidden>"
+				subtitle: "<hidden>"
+				body: "<hidden>"
+				badge: nil
+				attachments: []
+				category: "com.apple.screentime.weekly-usage-report"
+				userInfo: [:]
+				trigger: calendar dateComponents: hour: 9 minute: 16 second: 46 weekday: 1 isLeapMonth: false  repeats: false
+			================================
+

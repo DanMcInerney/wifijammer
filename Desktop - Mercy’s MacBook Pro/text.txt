@@ -1,0 +1,1 @@
+get-task-allow application-identifier $(AppIdentifierPrefix)$(CFBundleIdentifier)

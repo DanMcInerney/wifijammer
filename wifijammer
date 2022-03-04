@@ -305,7 +305,7 @@ def output(err, monchannel):
     if args.dry_run:
         print(P+'***DRY-RUN***'+W)
     if err:
-        print (err)
+        print(err)
     else:
         print('['+G+'+'+W+'] '+mon_iface+' channel: '+G+monchannel+W+'\n')
     if len(clients_APs) > 0:
@@ -314,15 +314,17 @@ def output(err, monchannel):
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print('['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W+' - '+ca[2].ljust(2)+' - '+T+ca[3]+W)
+                print('['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1] +
+                      W+' - '+ca[2].ljust(2)+' - '+T+ca[3]+W)
             else:
                 print('['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W+' - '+ca[2])
     if len(APs) > 0:
         print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print('['+T+'*'+W+'] '+O+ap[0]+W+' - '+ap[1].ljust(2)+' - '+T+ap[2]+W)
-    print ('')
+            print('['+T+'*'+W+'] '+O+ap[0]+W+' - ' +
+                  ap[1].ljust(2)+' - '+T+ap[2]+W)
+    print('')
 
 
 def noise_filter(skip, addr1, addr2):

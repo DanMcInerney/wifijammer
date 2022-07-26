@@ -187,8 +187,10 @@ def mon_mac(mon_iface):
     http://stackoverflow.com/questions/159137/getting-mac-address
     '''
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
-    mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+    #info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
+    #mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', bytes(mon_iface, 'utf-8')[:15]))
+    mac = ':'.join('%02x' % b for b in info[18:24])
     print '['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W
     return mac
 

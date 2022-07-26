@@ -124,7 +124,7 @@ def iwconfig():
         proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
     except OSError:
         sys.exit('['+R+'-'+W+'] Could not execute "iwconfig"')
-    for line in proc.communicate()[0].split('\n'):
+    for line in proc.communicate()[0].split('\n').decode('UTF-8'):
         if len(line) == 0: continue # Isn't an empty string
         if line[0] != ' ': # Doesn't start with space
             wired_search = re.search('eth[0-9]|em[0-9]|p[1-9]p[1-9]', line)

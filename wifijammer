@@ -123,10 +123,10 @@ def iwconfig():
     monitors = []
     interfaces = {}
     try:
-        proc = Popen(['iwconfig'], stdout=PIPE, stderr=DN)
+        proc = Popen(['iwconfig'], stdout=PIPE, stderr=PIPE)
     except OSError:
         sys.exit('['+R+'-'+W+'] Could not execute "iwconfig"')
-    for line in proc.communicate()[0].split('\n'):
+    for line in proc.communicate()[0].decode().split('\n'):
         if len(line) == 0:
             continue  # Isn't an empty string
         if line[0] != ' ':  # Doesn't start with space
@@ -196,8 +196,8 @@ def mon_mac(mon_iface):
     http://stackoverflow.com/questions/159137/getting-mac-address
     '''
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', mon_iface[:15]))
-    mac = ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(mon_iface, 'utf-8')[:15]))
+    mac = ':'.join('%02x' % b for b in info[18:24])
     print('['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W)
     return mac
 

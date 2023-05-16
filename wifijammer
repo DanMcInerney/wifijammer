@@ -27,6 +27,8 @@ C = '\033[36m'  # cyan
 GR = '\033[37m'  # gray
 T = '\033[93m'  # tan
 
+supported_channels = None
+
 
 def parse_args():
     # Create the arguments
@@ -88,6 +90,10 @@ def parse_args():
                         help="N. American standard is 11 channels but the rest \
                                 of the world it's 13 so this options enables the \
                                 scanning of 13 channels",
+                        action="store_true")
+    parser.add_argument("--5ghz",
+                        help="Enables 5GHZ",
+                        default=False,
                         action="store_true")
     parser.add_argument("--dry-run",
                         dest="dry_run",
@@ -196,8 +202,9 @@ def mon_mac(mon_iface):
     http://stackoverflow.com/questions/159137/getting-mac-address
     '''
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(mon_iface, 'utf-8')[:15]))
-    mac = ':'.join('%02x' % b for b in info[18:24])
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack(
+        '256s', bytes(mon_iface).encode('utf-8')[:15]))
+    mac = ':'.join('%02x' % ord(b) for b in info[18:24])
     print('['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W)
     return mac
 
@@ -209,15 +216,32 @@ def mon_mac(mon_iface):
 def channel_hop(mon_iface, args):
     '''
     First time it runs through the channels it stays on each channel for 5 seconds
-    in order to populate the deauth list nicely. After that it goes as fast as it can
+    in order to populate the deauth list nicely. After that, it goes as fast as it can.
     '''
-    global monchannel, first_pass
+    global monchannel, first_pass, supported_channels
 
     channelNum = 0
-    maxChan = 11 if not args.world else 13
+    maxChan = None
+    if getattr(args, '5ghz'):
+        maxChan = 165
+        if args.world:
+            supported_channels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 36, 40, 44, 48, 52, 56, 60, 64,
+                                  100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165]
+        else:
+            supported_channels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 36, 40, 44, 48, 52, 56, 60, 64,
+                                  100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165]
+    else:
+        if args.world:
+            maxChan = 13
+            supported_channels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                  12, 13]
+        else:
+            maxChan = 11
+            supported_channels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                  11]
     err = None
 
-    while 1:
+    while True:
         if args.channel:
             with lock:
                 monchannel = args.channel
@@ -227,25 +251,29 @@ def channel_hop(mon_iface, args):
                 channelNum = 1
                 with lock:
                     first_pass = 0
-            with lock:
-                monchannel = str(channelNum)
+
+            if channelNum in supported_channels:
+                with lock:
+                    monchannel = str(channelNum)
+            else:
+                continue  # Skip unsupported channels
 
             try:
                 proc = Popen(['iw', 'dev', mon_iface, 'set',
-                             'channel', monchannel], stdout=DN, stderr=PIPE)
+                              'channel', monchannel], stdout=DN, stderr=PIPE)
             except OSError:
                 print('['+R+'-'+W+'] Could not execute "iw"')
                 os.kill(os.getpid(), SIGINT)
                 sys.exit(1)
             for line in proc.communicate()[1].split('\n'):
-                if len(line) > 2:  # iw dev shouldnt display output unless there's an error
+                if len(line) > 2:  # iw dev shouldn't display output unless there's an error
                     err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
 
         output(err, monchannel)
         if args.channel:
             time.sleep(.05)
         else:
-            # For the first channel hop thru, do not deauth
+            # For the first channel hop, do not deauth
             if first_pass == 1:
                 time.sleep(1)
                 continue
@@ -394,14 +422,14 @@ def cb(pkt):
 
 
 def APs_add(clients_APs, APs, pkt, chan_arg, world_arg):
+    global supported_channels
     ssid = pkt[Dot11Elt].info
     bssid = pkt[Dot11].addr3.lower()
     try:
         # Thanks to airoscapy for below
         ap_channel = str(ord(pkt[Dot11Elt:3].info))
-        chans = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'] if not args.world else [
-            '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
-        if ap_channel not in chans:
+
+        if ap_channel not in [str(element) for element in supported_channels]:
             return
 
         if chan_arg:

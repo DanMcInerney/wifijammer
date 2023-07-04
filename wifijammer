@@ -237,7 +237,7 @@ def channel_hop(mon_iface, args):
                 print('['+R+'-'+W+'] Could not execute "iw"')
                 os.kill(os.getpid(), SIGINT)
                 sys.exit(1)
-            for line in proc.communicate()[1].split('\n'):
+            for line in proc.communicate()[1].decode().split('\n'):
                 if len(line) > 2:  # iw dev shouldnt display output unless there's an error
                     err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
 

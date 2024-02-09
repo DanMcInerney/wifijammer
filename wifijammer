@@ -196,8 +196,8 @@ def mon_mac(mon_iface):
     http://stackoverflow.com/questions/159137/getting-mac-address
     '''
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(mon_iface, 'utf-8')[:15]))
-    mac = ':'.join('%02x' % b for b in info[18:24])
+    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(mon_iface).encode('utf-8')[:15]))
+    mac = ':'.join('%02x' % ord(b) for b in info[18:24])
     print('['+G+'*'+W+'] Monitor mode: '+G+mon_iface+W+' - '+O+mac+W)
     return mac
 
@@ -452,11 +452,11 @@ def AP_check(addr1, addr2):
 
 def stop(signal, frame):
     if monitor_on:
-        os.system('service network-manager restart')
+        os.system('service NetworkManager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
     else:
         remove_mon_iface(mon_iface)
-        os.system('service network-manager restart')
+        os.system('service NetworkManager restart')
         sys.exit('\n['+R+'!'+W+'] Closing')
 
 
@@ -489,6 +489,6 @@ if __name__ == "__main__":
         sniff(iface=mon_iface, store=0, prn=cb)
     except Exception as msg:
         remove_mon_iface(mon_iface)
-        os.system('service network-manager restart')
+        os.system('service NetworkManager restart')
         print('\n['+R+'!'+W+'] Closing')
         sys.exit(0)
